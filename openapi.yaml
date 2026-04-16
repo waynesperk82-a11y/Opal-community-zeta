@@ -1,0 +1,679 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: Opal Zeta Community Q&A API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: questions
+    description: Question operations
+  - name: answers
+    description: Answer operations
+  - name: users
+    description: User operations
+  - name: stats
+    description: Dashboard and statistics
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /users:
+    post:
+      operationId: createUser
+      tags: [users]
+      summary: Create or get user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserBody"
+      responses:
+        "200":
+          description: User
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /me:
+    post:
+      operationId: upsertCurrentUser
+      tags: [users]
+      summary: Create or update the signed-in user's community profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpsertCurrentUserBody"
+      responses:
+        "200":
+          description: Current signed-in community user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /questions:
+    get:
+      operationId: listQuestions
+      tags: [questions]
+      summary: List questions with filters
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [open, answered, ai_answered]
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [recent, popular, unanswered]
+            default: recent
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Paginated list of questions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedQuestions"
+    post:
+      operationId: createQuestion
+      tags: [questions]
+      summary: Create a new question
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateQuestionBody"
+      responses:
+        "201":
+          description: Created question
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Question"
+
+  /questions/{id}:
+    get:
+      operationId: getQuestion
+      tags: [questions]
+      summary: Get question with answers
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Question with answers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestionDetail"
+        "404":
+          description: Not found
+
+  /questions/{id}/vote:
+    post:
+      operationId: voteQuestion
+      tags: [questions]
+      summary: Upvote or downvote a question
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VoteBody"
+      responses:
+        "200":
+          description: Updated vote count
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VoteResult"
+
+  /questions/{id}/like:
+    post:
+      operationId: likeQuestion
+      tags: [questions]
+      summary: Toggle a like on a question
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Updated like state and count
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LikeResult"
+
+  /questions/{questionId}/answers:
+    post:
+      operationId: createAnswer
+      tags: [answers]
+      summary: Submit an answer (goes through AI verification)
+      parameters:
+        - name: questionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAnswerBody"
+      responses:
+        "201":
+          description: Answer created with verification status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Answer"
+
+  /answers/{id}/vote:
+    post:
+      operationId: voteAnswer
+      tags: [answers]
+      summary: Upvote or downvote an answer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VoteBody"
+      responses:
+        "200":
+          description: Updated vote count
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VoteResult"
+
+  /answers/{id}/like:
+    post:
+      operationId: likeAnswer
+      tags: [answers]
+      summary: Toggle a like on an answer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Updated like state and count
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LikeResult"
+
+  /answers/{id}/accept:
+    post:
+      operationId: acceptAnswer
+      tags: [answers]
+      summary: Accept an answer as the solution
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Answer"
+
+  /stats/dashboard:
+    get:
+      operationId: getDashboardStats
+      tags: [stats]
+      summary: Get community dashboard statistics
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /stats/trending:
+    get:
+      operationId: getTrendingQuestions
+      tags: [stats]
+      summary: Get trending questions
+      responses:
+        "200":
+          description: Trending questions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Question"
+
+  /stats/categories:
+    get:
+      operationId: getCategoryStats
+      tags: [stats]
+      summary: Get question counts by category
+      responses:
+        "200":
+          description: Category statistics
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CategoryStat"
+
+  /stats/recent-activity:
+    get:
+      operationId: getRecentActivity
+      tags: [stats]
+      summary: Get recent community activity feed
+      responses:
+        "200":
+          description: Activity feed
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityItem"
+
+  /ai/check-unanswered:
+    post:
+      operationId: triggerAiAnswerCheck
+      tags: [questions]
+      summary: Trigger AI to answer unanswered questions older than 24hrs
+      responses:
+        "200":
+          description: Result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiCheckResult"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    CreateUserBody:
+      type: object
+      properties:
+        username:
+          type: string
+        displayName:
+          type: string
+        avatarUrl:
+          type: string
+      required:
+        - username
+        - displayName
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        clerkUserId:
+          type: ["string", "null"]
+        username:
+          type: string
+        email:
+          type: ["string", "null"]
+        displayName:
+          type: string
+        avatarUrl:
+          type: ["string", "null"]
+        reputation:
+          type: integer
+        questionsCount:
+          type: integer
+        answersCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - username
+        - displayName
+        - reputation
+        - questionsCount
+        - answersCount
+        - createdAt
+
+    UpsertCurrentUserBody:
+      type: object
+      properties:
+        username:
+          type: string
+        displayName:
+          type: string
+        email:
+          type: ["string", "null"]
+        avatarUrl:
+          type: ["string", "null"]
+      required:
+        - username
+        - displayName
+
+    CreateQuestionBody:
+      type: object
+      properties:
+        title:
+          type: string
+        body:
+          type: string
+        category:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+      required:
+        - title
+        - body
+        - category
+
+    Question:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        body:
+          type: string
+        category:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [open, answered, ai_answered]
+        voteCount:
+          type: integer
+        answerCount:
+          type: integer
+        viewCount:
+          type: integer
+        authorId:
+          type: integer
+        authorUsername:
+          type: string
+        authorDisplayName:
+          type: string
+        authorAvatarUrl:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - body
+        - category
+        - tags
+        - status
+        - voteCount
+        - answerCount
+        - viewCount
+        - authorId
+        - authorUsername
+        - authorDisplayName
+        - createdAt
+        - updatedAt
+
+    QuestionDetail:
+      type: object
+      properties:
+        question:
+          $ref: "#/components/schemas/Question"
+        answers:
+          type: array
+          items:
+            $ref: "#/components/schemas/Answer"
+      required:
+        - question
+        - answers
+
+    PaginatedQuestions:
+      type: object
+      properties:
+        questions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Question"
+        total:
+          type: integer
+        page:
+          type: integer
+        totalPages:
+          type: integer
+      required:
+        - questions
+        - total
+        - page
+        - totalPages
+
+    CreateAnswerBody:
+      type: object
+      properties:
+        body:
+          type: string
+      required:
+        - body
+        - authorId
+
+    Answer:
+      type: object
+      properties:
+        id:
+          type: integer
+        body:
+          type: string
+        questionId:
+          type: integer
+        authorId:
+          type: ["integer", "null"]
+        authorUsername:
+          type: string
+        authorDisplayName:
+          type: string
+        authorAvatarUrl:
+          type: ["string", "null"]
+        isAiGenerated:
+          type: boolean
+        isVerified:
+          type: boolean
+        verificationNote:
+          type: ["string", "null"]
+        isAccepted:
+          type: boolean
+        voteCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - body
+        - questionId
+        - authorUsername
+        - authorDisplayName
+        - isAiGenerated
+        - isVerified
+        - isAccepted
+        - voteCount
+        - createdAt
+
+    VoteBody:
+      type: object
+      properties:
+        direction:
+          type: string
+          enum: [up, down]
+        userId:
+          type: integer
+      required:
+        - direction
+
+    LikeResult:
+      type: object
+      properties:
+        liked:
+          type: boolean
+        likeCount:
+          type: integer
+      required:
+        - liked
+        - likeCount
+
+    VoteResult:
+      type: object
+      properties:
+        voteCount:
+          type: integer
+      required:
+        - voteCount
+
+    DashboardStats:
+      type: object
+      properties:
+        totalQuestions:
+          type: integer
+        totalAnswers:
+          type: integer
+        totalUsers:
+          type: integer
+        unansweredCount:
+          type: integer
+        aiAnsweredCount:
+          type: integer
+        avgResponseTimeHours:
+          type: number
+      required:
+        - totalQuestions
+        - totalAnswers
+        - totalUsers
+        - unansweredCount
+        - aiAnsweredCount
+        - avgResponseTimeHours
+
+    CategoryStat:
+      type: object
+      properties:
+        category:
+          type: string
+        count:
+          type: integer
+      required:
+        - category
+        - count
+
+    ActivityItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+          enum: [question, answer, ai_answer]
+        title:
+          type: string
+        username:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - type
+        - title
+        - username
+        - createdAt
+
+    AiCheckResult:
+      type: object
+      properties:
+        processed:
+          type: integer
+        answered:
+          type: integer
+      required:
+        - processed
+        - answered
