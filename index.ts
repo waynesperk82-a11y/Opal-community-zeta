@@ -1,6 +1,1 @@
-export {
-  batchProcess,
-  batchProcessWithSSE,
-  isRateLimitError,
-  type BatchOptions,
-} from "./utils";
+export { openai, generateImageBuffer, editImages } from "./client";
