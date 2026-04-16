@@ -1,23 +1,45 @@
-// Export your models here. Add one export per file
-// export * from "./posts";
-//
-// Each model/table should ideally be split into different files.
-// Each model/table should define a Drizzle table, insert schema, and types:
-//
-//   import { pgTable, text, serial } from "drizzle-orm/pg-core";
-//   import { createInsertSchema } from "drizzle-zod";
-//   import { z } from "zod/v4";
-//
-//   export const postsTable = pgTable("posts", {
-//     id: serial("id").primaryKey(),
-//     title: text("title").notNull(),
-//   });
-//
-//   export const insertPostSchema = createInsertSchema(postsTable).omit({ id: true });
-//   export type InsertPost = z.infer<typeof insertPostSchema>;
-//   export type Post = typeof postsTable.$inferSelect;
+/**
+ * Voice chat client utilities for Replit AI Integrations.
+ * 
+ * Usage:
+ * 1. Copy audio-playback-worklet.js to your public/ folder
+ * 2. Import and use the React hooks in your components
+ * 
+ * Example:
+ * ```tsx
+ * import { useVoiceRecorder, useVoiceStream } from "./audio";
+ * 
+ * function VoiceChat() {
+ *   const [transcript, setTranscript] = useState("");
+ *   const recorder = useVoiceRecorder();
+ *   const stream = useVoiceStream({
+ *     onTranscript: (_, full) => setTranscript(full),
+ *     onComplete: (text) => console.log("Done:", text),
+ *   });
+ * 
+ *   const handleClick = async () => {
+ *     if (recorder.state === "recording") {
+ *       const blob = await recorder.stopRecording();
+ *       await stream.streamVoiceResponse("/api/conversations/1/messages", blob);
+ *     } else {
+ *       await recorder.startRecording();
+ *     }
+ *   };
+ * 
+ *   return (
+ *     <div>
+ *       <button onClick={handleClick}>
+ *         {recorder.state === "recording" ? "Stop" : "Record"}
+ *       </button>
+ *       <p>{transcript}</p>
+ *     </div>
+ *   );
+ * }
+ * ```
+ */
 
-export * from "./users";
-export * from "./questions";
-export * from "./answers";
-export * from "./likes";
+export { decodePCM16ToFloat32, createAudioPlaybackContext } from "./audio-utils";
+export { useVoiceRecorder, type RecordingState } from "./useVoiceRecorder";
+export { useAudioPlayback, type PlaybackState } from "./useAudioPlayback";
+export { useVoiceStream } from "./useVoiceStream";
+
