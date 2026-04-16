@@ -45,7 +45,7 @@ class SequenceBuffer {
   }
 }
 
-export function useAudioPlayback(workletPath = "/audio-playback-worklet.js") {
+export function useAudioPlayback(workletPath: string) {
   const [state, setState] = useState<PlaybackState>("idle");
   const ctxRef = useRef<AudioContext | null>(null);
   const workletRef = useRef<AudioWorkletNode | null>(null);
@@ -54,6 +54,9 @@ export function useAudioPlayback(workletPath = "/audio-playback-worklet.js") {
 
   const init = useCallback(async () => {
     if (readyRef.current) return;
+    if (!workletPath) {
+      throw new Error("workletPath is required for audio playback");
+    }
 
     const ctx = new AudioContext({ sampleRate: 24000 });
     await ctx.audioWorklet.addModule(workletPath);
