@@ -24,13 +24,15 @@ export function decodePCM16ToFloat32(base64Audio: string): Float32Array {
  * Create and initialize AudioContext with worklet
  */
 export async function createAudioPlaybackContext(
-  workletPath = "/audio-playback-worklet.js",
+  workletPath: string,
   sampleRate = 24000
 ): Promise<{ ctx: AudioContext; worklet: AudioWorkletNode }> {
+  if (!workletPath) {
+    throw new Error("workletPath is required for audio playback");
+  }
   const ctx = new AudioContext({ sampleRate });
   await ctx.audioWorklet.addModule(workletPath);
   const worklet = new AudioWorkletNode(ctx, "audio-playback-processor");
   worklet.connect(ctx.destination);
   return { ctx, worklet };
 }
-
