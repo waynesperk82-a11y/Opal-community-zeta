@@ -5,1452 +5,311 @@
  * Opal Zeta Community Q&A API
  * OpenAPI spec version: 0.1.0
  */
-import { useMutation, useQuery } from "@tanstack/react-query";
-import type {
-  MutationFunction,
-  QueryFunction,
-  QueryKey,
-  UseMutationOptions,
-  UseMutationResult,
-  UseQueryOptions,
-  UseQueryResult,
-} from "@tanstack/react-query";
-
-import type {
-  ActivityItem,
-  AiCheckResult,
-  Answer,
-  CategoryStat,
-  CreateAnswerBody,
-  CreateQuestionBody,
-  CreateUserBody,
-  DashboardStats,
-  HealthStatus,
-  LikeResult,
-  ListQuestionsParams,
-  PaginatedQuestions,
-  Question,
-  QuestionDetail,
-  UpsertCurrentUserBody,
-  User,
-  VoteBody,
-  VoteResult,
-} from "./api.schemas";
-
-import { customFetch } from "../custom-fetch";
-import type { ErrorType, BodyType } from "../custom-fetch";
-
-type AwaitedInput<T> = PromiseLike<T> | T;
-
-type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
-
-type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+import * as zod from "zod";
 
 /**
  * Returns server health status
  * @summary Health check
  */
-export const getHealthCheckUrl = () => {
-  return `/api/healthz`;
-};
-
-export const healthCheck = async (
-  options?: RequestInit,
-): Promise<HealthStatus> => {
-  return customFetch<HealthStatus>(getHealthCheckUrl(), {
-    ...options,
-    method: "GET",
-  });
-};
-
-export const getHealthCheckQueryKey = () => {
-  return [`/api/healthz`] as const;
-};
-
-export const getHealthCheckQueryOptions = <
-  TData = Awaited<ReturnType<typeof healthCheck>>,
-  TError = ErrorType<unknown>,
->(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof healthCheck>>,
-    TError,
-    TData
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
-
-  const queryKey = queryOptions?.queryKey ?? getHealthCheckQueryKey();
-
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof healthCheck>>> = ({
-    signal,
-  }) => healthCheck({ signal, ...requestOptions });
-
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof healthCheck>>,
-    TError,
-    TData
-  > & { queryKey: QueryKey };
-};
-
-export type HealthCheckQueryResult = NonNullable<
-  Awaited<ReturnType<typeof healthCheck>>
->;
-export type HealthCheckQueryError = ErrorType<unknown>;
-
-/**
- * @summary Health check
- */
-
-export function useHealthCheck<
-  TData = Awaited<ReturnType<typeof healthCheck>>,
-  TError = ErrorType<unknown>,
->(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof healthCheck>>,
-    TError,
-    TData
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-  const queryOptions = getHealthCheckQueryOptions(options);
-
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
+export const HealthCheckResponse = zod.object({
+  status: zod.string(),
+});
 
 /**
  * @summary Create or get user
  */
-export const getCreateUserUrl = () => {
-  return `/api/users`;
-};
+export const CreateUserBody = zod.object({
+  username: zod.string(),
+  displayName: zod.string(),
+  avatarUrl: zod.string().optional(),
+});
 
-export const createUser = async (
-  createUserBody: CreateUserBody,
-  options?: RequestInit,
-): Promise<User> => {
-  return customFetch<User>(getCreateUserUrl(), {
-    ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(createUserBody),
-  });
-};
-
-export const getCreateUserMutationOptions = <
-  TError = ErrorType<unknown>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof createUser>>,
-    TError,
-    { data: BodyType<CreateUserBody> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof createUser>>,
-  TError,
-  { data: BodyType<CreateUserBody> },
-  TContext
-> => {
-  const mutationKey = ["createUser"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof createUser>>,
-    { data: BodyType<CreateUserBody> }
-  > = (props) => {
-    const { data } = props ?? {};
-
-    return createUser(data, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type CreateUserMutationResult = NonNullable<
-  Awaited<ReturnType<typeof createUser>>
->;
-export type CreateUserMutationBody = BodyType<CreateUserBody>;
-export type CreateUserMutationError = ErrorType<unknown>;
-
-/**
- * @summary Create or get user
- */
-export const useCreateUser = <
-  TError = ErrorType<unknown>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof createUser>>,
-    TError,
-    { data: BodyType<CreateUserBody> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationResult<
-  Awaited<ReturnType<typeof createUser>>,
-  TError,
-  { data: BodyType<CreateUserBody> },
-  TContext
-> => {
-  return useMutation(getCreateUserMutationOptions(options));
-};
+export const CreateUserResponse = zod.object({
+  id: zod.number(),
+  clerkUserId: zod.string().nullish(),
+  username: zod.string(),
+  email: zod.string().nullish(),
+  displayName: zod.string(),
+  avatarUrl: zod.string().nullish(),
+  reputation: zod.number(),
+  questionsCount: zod.number(),
+  answersCount: zod.number(),
+  createdAt: zod.coerce.date(),
+});
 
 /**
  * @summary Create or update the signed-in user's community profile
  */
-export const getUpsertCurrentUserUrl = () => {
-  return `/api/me`;
-};
+export const UpsertCurrentUserBody = zod.object({
+  username: zod.string(),
+  displayName: zod.string(),
+  email: zod.string().nullish(),
+  avatarUrl: zod.string().nullish(),
+});
 
-export const upsertCurrentUser = async (
-  upsertCurrentUserBody: UpsertCurrentUserBody,
-  options?: RequestInit,
-): Promise<User> => {
-  return customFetch<User>(getUpsertCurrentUserUrl(), {
-    ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(upsertCurrentUserBody),
-  });
-};
-
-export const getUpsertCurrentUserMutationOptions = <
-  TError = ErrorType<unknown>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof upsertCurrentUser>>,
-    TError,
-    { data: BodyType<UpsertCurrentUserBody> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof upsertCurrentUser>>,
-  TError,
-  { data: BodyType<UpsertCurrentUserBody> },
-  TContext
-> => {
-  const mutationKey = ["upsertCurrentUser"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof upsertCurrentUser>>,
-    { data: BodyType<UpsertCurrentUserBody> }
-  > = (props) => {
-    const { data } = props ?? {};
-
-    return upsertCurrentUser(data, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type UpsertCurrentUserMutationResult = NonNullable<
-  Awaited<ReturnType<typeof upsertCurrentUser>>
->;
-export type UpsertCurrentUserMutationBody = BodyType<UpsertCurrentUserBody>;
-export type UpsertCurrentUserMutationError = ErrorType<unknown>;
-
-/**
- * @summary Create or update the signed-in user's community profile
- */
-export const useUpsertCurrentUser = <
-  TError = ErrorType<unknown>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof upsertCurrentUser>>,
-    TError,
-    { data: BodyType<UpsertCurrentUserBody> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationResult<
-  Awaited<ReturnType<typeof upsertCurrentUser>>,
-  TError,
-  { data: BodyType<UpsertCurrentUserBody> },
-  TContext
-> => {
-  return useMutation(getUpsertCurrentUserMutationOptions(options));
-};
+export const UpsertCurrentUserResponse = zod.object({
+  id: zod.number(),
+  clerkUserId: zod.string().nullish(),
+  username: zod.string(),
+  email: zod.string().nullish(),
+  displayName: zod.string(),
+  avatarUrl: zod.string().nullish(),
+  reputation: zod.number(),
+  questionsCount: zod.number(),
+  answersCount: zod.number(),
+  createdAt: zod.coerce.date(),
+});
 
 /**
  * @summary List questions with filters
  */
-export const getListQuestionsUrl = (params?: ListQuestionsParams) => {
-  const normalizedParams = new URLSearchParams();
+export const listQuestionsQuerySortDefault = `recent`;
+export const listQuestionsQueryPageDefault = 1;
+export const listQuestionsQueryLimitDefault = 20;
 
-  Object.entries(params || {}).forEach(([key, value]) => {
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : value.toString());
-    }
-  });
+export const ListQuestionsQueryParams = zod.object({
+  category: zod.coerce.string().optional(),
+  status: zod.enum(["open", "answered", "ai_answered"]).optional(),
+  sort: zod
+    .enum(["recent", "popular", "unanswered"])
+    .default(listQuestionsQuerySortDefault),
+  search: zod.coerce.string().optional(),
+  page: zod.coerce.number().default(listQuestionsQueryPageDefault),
+  limit: zod.coerce.number().default(listQuestionsQueryLimitDefault),
+});
 
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0
-    ? `/api/questions?${stringifiedParams}`
-    : `/api/questions`;
-};
-
-export const listQuestions = async (
-  params?: ListQuestionsParams,
-  options?: RequestInit,
-): Promise<PaginatedQuestions> => {
-  return customFetch<PaginatedQuestions>(getListQuestionsUrl(params), {
-    ...options,
-    method: "GET",
-  });
-};
-
-export const getListQuestionsQueryKey = (params?: ListQuestionsParams) => {
-  return [`/api/questions`, ...(params ? [params] : [])] as const;
-};
-
-export const getListQuestionsQueryOptions = <
-  TData = Awaited<ReturnType<typeof listQuestions>>,
-  TError = ErrorType<unknown>,
->(
-  params?: ListQuestionsParams,
-  options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof listQuestions>>,
-      TError,
-      TData
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
-
-  const queryKey = queryOptions?.queryKey ?? getListQuestionsQueryKey(params);
-
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof listQuestions>>> = ({
-    signal,
-  }) => listQuestions(params, { signal, ...requestOptions });
-
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof listQuestions>>,
-    TError,
-    TData
-  > & { queryKey: QueryKey };
-};
-
-export type ListQuestionsQueryResult = NonNullable<
-  Awaited<ReturnType<typeof listQuestions>>
->;
-export type ListQuestionsQueryError = ErrorType<unknown>;
-
-/**
- * @summary List questions with filters
- */
-
-export function useListQuestions<
-  TData = Awaited<ReturnType<typeof listQuestions>>,
-  TError = ErrorType<unknown>,
->(
-  params?: ListQuestionsParams,
-  options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof listQuestions>>,
-      TError,
-      TData
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-  const queryOptions = getListQuestionsQueryOptions(params, options);
-
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
+export const ListQuestionsResponse = zod.object({
+  questions: zod.array(
+    zod.object({
+      id: zod.number(),
+      title: zod.string(),
+      body: zod.string(),
+      category: zod.string(),
+      tags: zod.array(zod.string()),
+      status: zod.enum(["open", "answered", "ai_answered"]),
+      voteCount: zod.number(),
+      answerCount: zod.number(),
+      viewCount: zod.number(),
+      authorId: zod.number(),
+      authorUsername: zod.string(),
+      authorDisplayName: zod.string(),
+      authorAvatarUrl: zod.string().nullish(),
+      createdAt: zod.coerce.date(),
+      updatedAt: zod.coerce.date(),
+    }),
+  ),
+  total: zod.number(),
+  page: zod.number(),
+  totalPages: zod.number(),
+});
 
 /**
  * @summary Create a new question
  */
-export const getCreateQuestionUrl = () => {
-  return `/api/questions`;
-};
-
-export const createQuestion = async (
-  createQuestionBody: CreateQuestionBody,
-  options?: RequestInit,
-): Promise<Question> => {
-  return customFetch<Question>(getCreateQuestionUrl(), {
-    ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(createQuestionBody),
-  });
-};
-
-export const getCreateQuestionMutationOptions = <
-  TError = ErrorType<unknown>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof createQuestion>>,
-    TError,
-    { data: BodyType<CreateQuestionBody> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof createQuestion>>,
-  TError,
-  { data: BodyType<CreateQuestionBody> },
-  TContext
-> => {
-  const mutationKey = ["createQuestion"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof createQuestion>>,
-    { data: BodyType<CreateQuestionBody> }
-  > = (props) => {
-    const { data } = props ?? {};
-
-    return createQuestion(data, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type CreateQuestionMutationResult = NonNullable<
-  Awaited<ReturnType<typeof createQuestion>>
->;
-export type CreateQuestionMutationBody = BodyType<CreateQuestionBody>;
-export type CreateQuestionMutationError = ErrorType<unknown>;
-
-/**
- * @summary Create a new question
- */
-export const useCreateQuestion = <
-  TError = ErrorType<unknown>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof createQuestion>>,
-    TError,
-    { data: BodyType<CreateQuestionBody> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationResult<
-  Awaited<ReturnType<typeof createQuestion>>,
-  TError,
-  { data: BodyType<CreateQuestionBody> },
-  TContext
-> => {
-  return useMutation(getCreateQuestionMutationOptions(options));
-};
+export const CreateQuestionBody = zod.object({
+  title: zod.string(),
+  body: zod.string(),
+  category: zod.string(),
+  tags: zod.array(zod.string()).optional(),
+});
 
 /**
  * @summary Get question with answers
  */
-export const getGetQuestionUrl = (id: number) => {
-  return `/api/questions/${id}`;
-};
+export const GetQuestionParams = zod.object({
+  id: zod.coerce.number(),
+});
 
-export const getQuestion = async (
-  id: number,
-  options?: RequestInit,
-): Promise<QuestionDetail> => {
-  return customFetch<QuestionDetail>(getGetQuestionUrl(id), {
-    ...options,
-    method: "GET",
-  });
-};
-
-export const getGetQuestionQueryKey = (id: number) => {
-  return [`/api/questions/${id}`] as const;
-};
-
-export const getGetQuestionQueryOptions = <
-  TData = Awaited<ReturnType<typeof getQuestion>>,
-  TError = ErrorType<void>,
->(
-  id: number,
-  options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof getQuestion>>,
-      TError,
-      TData
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
-
-  const queryKey = queryOptions?.queryKey ?? getGetQuestionQueryKey(id);
-
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getQuestion>>> = ({
-    signal,
-  }) => getQuestion(id, { signal, ...requestOptions });
-
-  return {
-    queryKey,
-    queryFn,
-    enabled: !!id,
-    ...queryOptions,
-  } as UseQueryOptions<
-    Awaited<ReturnType<typeof getQuestion>>,
-    TError,
-    TData
-  > & { queryKey: QueryKey };
-};
-
-export type GetQuestionQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getQuestion>>
->;
-export type GetQuestionQueryError = ErrorType<void>;
-
-/**
- * @summary Get question with answers
- */
-
-export function useGetQuestion<
-  TData = Awaited<ReturnType<typeof getQuestion>>,
-  TError = ErrorType<void>,
->(
-  id: number,
-  options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof getQuestion>>,
-      TError,
-      TData
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-  const queryOptions = getGetQuestionQueryOptions(id, options);
-
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
+export const GetQuestionResponse = zod.object({
+  question: zod.object({
+    id: zod.number(),
+    title: zod.string(),
+    body: zod.string(),
+    category: zod.string(),
+    tags: zod.array(zod.string()),
+    status: zod.enum(["open", "answered", "ai_answered"]),
+    voteCount: zod.number(),
+    answerCount: zod.number(),
+    viewCount: zod.number(),
+    authorId: zod.number(),
+    authorUsername: zod.string(),
+    authorDisplayName: zod.string(),
+    authorAvatarUrl: zod.string().nullish(),
+    createdAt: zod.coerce.date(),
+    updatedAt: zod.coerce.date(),
+  }),
+  answers: zod.array(
+    zod.object({
+      id: zod.number(),
+      body: zod.string(),
+      questionId: zod.number(),
+      authorId: zod.number().nullish(),
+      authorUsername: zod.string(),
+      authorDisplayName: zod.string(),
+      authorAvatarUrl: zod.string().nullish(),
+      isAiGenerated: zod.boolean(),
+      isVerified: zod.boolean(),
+      verificationNote: zod.string().nullish(),
+      isAccepted: zod.boolean(),
+      voteCount: zod.number(),
+      createdAt: zod.coerce.date(),
+    }),
+  ),
+});
 
 /**
  * @summary Upvote or downvote a question
  */
-export const getVoteQuestionUrl = (id: number) => {
-  return `/api/questions/${id}/vote`;
-};
+export const VoteQuestionParams = zod.object({
+  id: zod.coerce.number(),
+});
 
-export const voteQuestion = async (
-  id: number,
-  voteBody: VoteBody,
-  options?: RequestInit,
-): Promise<VoteResult> => {
-  return customFetch<VoteResult>(getVoteQuestionUrl(id), {
-    ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(voteBody),
-  });
-};
+export const VoteQuestionBody = zod.object({
+  direction: zod.enum(["up", "down"]),
+  userId: zod.number().optional(),
+});
 
-export const getVoteQuestionMutationOptions = <
-  TError = ErrorType<unknown>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof voteQuestion>>,
-    TError,
-    { id: number; data: BodyType<VoteBody> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof voteQuestion>>,
-  TError,
-  { id: number; data: BodyType<VoteBody> },
-  TContext
-> => {
-  const mutationKey = ["voteQuestion"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof voteQuestion>>,
-    { id: number; data: BodyType<VoteBody> }
-  > = (props) => {
-    const { id, data } = props ?? {};
-
-    return voteQuestion(id, data, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type VoteQuestionMutationResult = NonNullable<
-  Awaited<ReturnType<typeof voteQuestion>>
->;
-export type VoteQuestionMutationBody = BodyType<VoteBody>;
-export type VoteQuestionMutationError = ErrorType<unknown>;
-
-/**
- * @summary Upvote or downvote a question
- */
-export const useVoteQuestion = <
-  TError = ErrorType<unknown>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof voteQuestion>>,
-    TError,
-    { id: number; data: BodyType<VoteBody> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationResult<
-  Awaited<ReturnType<typeof voteQuestion>>,
-  TError,
-  { id: number; data: BodyType<VoteBody> },
-  TContext
-> => {
-  return useMutation(getVoteQuestionMutationOptions(options));
-};
+export const VoteQuestionResponse = zod.object({
+  voteCount: zod.number(),
+});
 
 /**
  * @summary Toggle a like on a question
  */
-export const getLikeQuestionUrl = (id: number) => {
-  return `/api/questions/${id}/like`;
-};
+export const LikeQuestionParams = zod.object({
+  id: zod.coerce.number(),
+});
 
-export const likeQuestion = async (
-  id: number,
-  options?: RequestInit,
-): Promise<LikeResult> => {
-  return customFetch<LikeResult>(getLikeQuestionUrl(id), {
-    ...options,
-    method: "POST",
-  });
-};
-
-export const getLikeQuestionMutationOptions = <
-  TError = ErrorType<unknown>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof likeQuestion>>,
-    TError,
-    { id: number },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof likeQuestion>>,
-  TError,
-  { id: number },
-  TContext
-> => {
-  const mutationKey = ["likeQuestion"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof likeQuestion>>,
-    { id: number }
-  > = (props) => {
-    const { id } = props ?? {};
-
-    return likeQuestion(id, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type LikeQuestionMutationResult = NonNullable<
-  Awaited<ReturnType<typeof likeQuestion>>
->;
-
-export type LikeQuestionMutationError = ErrorType<unknown>;
-
-/**
- * @summary Toggle a like on a question
- */
-export const useLikeQuestion = <
-  TError = ErrorType<unknown>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof likeQuestion>>,
-    TError,
-    { id: number },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationResult<
-  Awaited<ReturnType<typeof likeQuestion>>,
-  TError,
-  { id: number },
-  TContext
-> => {
-  return useMutation(getLikeQuestionMutationOptions(options));
-};
+export const LikeQuestionResponse = zod.object({
+  liked: zod.boolean(),
+  likeCount: zod.number(),
+});
 
 /**
  * @summary Submit an answer (goes through AI verification)
  */
-export const getCreateAnswerUrl = (questionId: number) => {
-  return `/api/questions/${questionId}/answers`;
-};
+export const CreateAnswerParams = zod.object({
+  questionId: zod.coerce.number(),
+});
 
-export const createAnswer = async (
-  questionId: number,
-  createAnswerBody: CreateAnswerBody,
-  options?: RequestInit,
-): Promise<Answer> => {
-  return customFetch<Answer>(getCreateAnswerUrl(questionId), {
-    ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(createAnswerBody),
-  });
-};
-
-export const getCreateAnswerMutationOptions = <
-  TError = ErrorType<unknown>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof createAnswer>>,
-    TError,
-    { questionId: number; data: BodyType<CreateAnswerBody> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof createAnswer>>,
-  TError,
-  { questionId: number; data: BodyType<CreateAnswerBody> },
-  TContext
-> => {
-  const mutationKey = ["createAnswer"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof createAnswer>>,
-    { questionId: number; data: BodyType<CreateAnswerBody> }
-  > = (props) => {
-    const { questionId, data } = props ?? {};
-
-    return createAnswer(questionId, data, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type CreateAnswerMutationResult = NonNullable<
-  Awaited<ReturnType<typeof createAnswer>>
->;
-export type CreateAnswerMutationBody = BodyType<CreateAnswerBody>;
-export type CreateAnswerMutationError = ErrorType<unknown>;
-
-/**
- * @summary Submit an answer (goes through AI verification)
- */
-export const useCreateAnswer = <
-  TError = ErrorType<unknown>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof createAnswer>>,
-    TError,
-    { questionId: number; data: BodyType<CreateAnswerBody> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationResult<
-  Awaited<ReturnType<typeof createAnswer>>,
-  TError,
-  { questionId: number; data: BodyType<CreateAnswerBody> },
-  TContext
-> => {
-  return useMutation(getCreateAnswerMutationOptions(options));
-};
+export const CreateAnswerBody = zod.object({
+  body: zod.string(),
+});
 
 /**
  * @summary Upvote or downvote an answer
  */
-export const getVoteAnswerUrl = (id: number) => {
-  return `/api/answers/${id}/vote`;
-};
+export const VoteAnswerParams = zod.object({
+  id: zod.coerce.number(),
+});
 
-export const voteAnswer = async (
-  id: number,
-  voteBody: VoteBody,
-  options?: RequestInit,
-): Promise<VoteResult> => {
-  return customFetch<VoteResult>(getVoteAnswerUrl(id), {
-    ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(voteBody),
-  });
-};
+export const VoteAnswerBody = zod.object({
+  direction: zod.enum(["up", "down"]),
+  userId: zod.number().optional(),
+});
 
-export const getVoteAnswerMutationOptions = <
-  TError = ErrorType<unknown>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof voteAnswer>>,
-    TError,
-    { id: number; data: BodyType<VoteBody> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof voteAnswer>>,
-  TError,
-  { id: number; data: BodyType<VoteBody> },
-  TContext
-> => {
-  const mutationKey = ["voteAnswer"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof voteAnswer>>,
-    { id: number; data: BodyType<VoteBody> }
-  > = (props) => {
-    const { id, data } = props ?? {};
-
-    return voteAnswer(id, data, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type VoteAnswerMutationResult = NonNullable<
-  Awaited<ReturnType<typeof voteAnswer>>
->;
-export type VoteAnswerMutationBody = BodyType<VoteBody>;
-export type VoteAnswerMutationError = ErrorType<unknown>;
-
-/**
- * @summary Upvote or downvote an answer
- */
-export const useVoteAnswer = <
-  TError = ErrorType<unknown>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof voteAnswer>>,
-    TError,
-    { id: number; data: BodyType<VoteBody> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationResult<
-  Awaited<ReturnType<typeof voteAnswer>>,
-  TError,
-  { id: number; data: BodyType<VoteBody> },
-  TContext
-> => {
-  return useMutation(getVoteAnswerMutationOptions(options));
-};
+export const VoteAnswerResponse = zod.object({
+  voteCount: zod.number(),
+});
 
 /**
  * @summary Toggle a like on an answer
  */
-export const getLikeAnswerUrl = (id: number) => {
-  return `/api/answers/${id}/like`;
-};
+export const LikeAnswerParams = zod.object({
+  id: zod.coerce.number(),
+});
 
-export const likeAnswer = async (
-  id: number,
-  options?: RequestInit,
-): Promise<LikeResult> => {
-  return customFetch<LikeResult>(getLikeAnswerUrl(id), {
-    ...options,
-    method: "POST",
-  });
-};
-
-export const getLikeAnswerMutationOptions = <
-  TError = ErrorType<unknown>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof likeAnswer>>,
-    TError,
-    { id: number },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof likeAnswer>>,
-  TError,
-  { id: number },
-  TContext
-> => {
-  const mutationKey = ["likeAnswer"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof likeAnswer>>,
-    { id: number }
-  > = (props) => {
-    const { id } = props ?? {};
-
-    return likeAnswer(id, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type LikeAnswerMutationResult = NonNullable<
-  Awaited<ReturnType<typeof likeAnswer>>
->;
-
-export type LikeAnswerMutationError = ErrorType<unknown>;
-
-/**
- * @summary Toggle a like on an answer
- */
-export const useLikeAnswer = <
-  TError = ErrorType<unknown>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof likeAnswer>>,
-    TError,
-    { id: number },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationResult<
-  Awaited<ReturnType<typeof likeAnswer>>,
-  TError,
-  { id: number },
-  TContext
-> => {
-  return useMutation(getLikeAnswerMutationOptions(options));
-};
+export const LikeAnswerResponse = zod.object({
+  liked: zod.boolean(),
+  likeCount: zod.number(),
+});
 
 /**
  * @summary Accept an answer as the solution
  */
-export const getAcceptAnswerUrl = (id: number) => {
-  return `/api/answers/${id}/accept`;
-};
+export const AcceptAnswerParams = zod.object({
+  id: zod.coerce.number(),
+});
 
-export const acceptAnswer = async (
-  id: number,
-  options?: RequestInit,
-): Promise<Answer> => {
-  return customFetch<Answer>(getAcceptAnswerUrl(id), {
-    ...options,
-    method: "POST",
-  });
-};
-
-export const getAcceptAnswerMutationOptions = <
-  TError = ErrorType<unknown>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof acceptAnswer>>,
-    TError,
-    { id: number },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof acceptAnswer>>,
-  TError,
-  { id: number },
-  TContext
-> => {
-  const mutationKey = ["acceptAnswer"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof acceptAnswer>>,
-    { id: number }
-  > = (props) => {
-    const { id } = props ?? {};
-
-    return acceptAnswer(id, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type AcceptAnswerMutationResult = NonNullable<
-  Awaited<ReturnType<typeof acceptAnswer>>
->;
-
-export type AcceptAnswerMutationError = ErrorType<unknown>;
-
-/**
- * @summary Accept an answer as the solution
- */
-export const useAcceptAnswer = <
-  TError = ErrorType<unknown>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof acceptAnswer>>,
-    TError,
-    { id: number },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationResult<
-  Awaited<ReturnType<typeof acceptAnswer>>,
-  TError,
-  { id: number },
-  TContext
-> => {
-  return useMutation(getAcceptAnswerMutationOptions(options));
-};
+export const AcceptAnswerResponse = zod.object({
+  id: zod.number(),
+  body: zod.string(),
+  questionId: zod.number(),
+  authorId: zod.number().nullish(),
+  authorUsername: zod.string(),
+  authorDisplayName: zod.string(),
+  authorAvatarUrl: zod.string().nullish(),
+  isAiGenerated: zod.boolean(),
+  isVerified: zod.boolean(),
+  verificationNote: zod.string().nullish(),
+  isAccepted: zod.boolean(),
+  voteCount: zod.number(),
+  createdAt: zod.coerce.date(),
+});
 
 /**
  * @summary Get community dashboard statistics
  */
-export const getGetDashboardStatsUrl = () => {
-  return `/api/stats/dashboard`;
-};
-
-export const getDashboardStats = async (
-  options?: RequestInit,
-): Promise<DashboardStats> => {
-  return customFetch<DashboardStats>(getGetDashboardStatsUrl(), {
-    ...options,
-    method: "GET",
-  });
-};
-
-export const getGetDashboardStatsQueryKey = () => {
-  return [`/api/stats/dashboard`] as const;
-};
-
-export const getGetDashboardStatsQueryOptions = <
-  TData = Awaited<ReturnType<typeof getDashboardStats>>,
-  TError = ErrorType<unknown>,
->(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof getDashboardStats>>,
-    TError,
-    TData
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
-
-  const queryKey = queryOptions?.queryKey ?? getGetDashboardStatsQueryKey();
-
-  const queryFn: QueryFunction<
-    Awaited<ReturnType<typeof getDashboardStats>>
-  > = ({ signal }) => getDashboardStats({ signal, ...requestOptions });
-
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getDashboardStats>>,
-    TError,
-    TData
-  > & { queryKey: QueryKey };
-};
-
-export type GetDashboardStatsQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getDashboardStats>>
->;
-export type GetDashboardStatsQueryError = ErrorType<unknown>;
-
-/**
- * @summary Get community dashboard statistics
- */
-
-export function useGetDashboardStats<
-  TData = Awaited<ReturnType<typeof getDashboardStats>>,
-  TError = ErrorType<unknown>,
->(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof getDashboardStats>>,
-    TError,
-    TData
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-  const queryOptions = getGetDashboardStatsQueryOptions(options);
-
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
+export const GetDashboardStatsResponse = zod.object({
+  totalQuestions: zod.number(),
+  totalAnswers: zod.number(),
+  totalUsers: zod.number(),
+  unansweredCount: zod.number(),
+  aiAnsweredCount: zod.number(),
+  avgResponseTimeHours: zod.number(),
+});
 
 /**
  * @summary Get trending questions
  */
-export const getGetTrendingQuestionsUrl = () => {
-  return `/api/stats/trending`;
-};
-
-export const getTrendingQuestions = async (
-  options?: RequestInit,
-): Promise<Question[]> => {
-  return customFetch<Question[]>(getGetTrendingQuestionsUrl(), {
-    ...options,
-    method: "GET",
-  });
-};
-
-export const getGetTrendingQuestionsQueryKey = () => {
-  return [`/api/stats/trending`] as const;
-};
-
-export const getGetTrendingQuestionsQueryOptions = <
-  TData = Awaited<ReturnType<typeof getTrendingQuestions>>,
-  TError = ErrorType<unknown>,
->(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof getTrendingQuestions>>,
-    TError,
-    TData
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
-
-  const queryKey = queryOptions?.queryKey ?? getGetTrendingQuestionsQueryKey();
-
-  const queryFn: QueryFunction<
-    Awaited<ReturnType<typeof getTrendingQuestions>>
-  > = ({ signal }) => getTrendingQuestions({ signal, ...requestOptions });
-
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getTrendingQuestions>>,
-    TError,
-    TData
-  > & { queryKey: QueryKey };
-};
-
-export type GetTrendingQuestionsQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getTrendingQuestions>>
->;
-export type GetTrendingQuestionsQueryError = ErrorType<unknown>;
-
-/**
- * @summary Get trending questions
- */
-
-export function useGetTrendingQuestions<
-  TData = Awaited<ReturnType<typeof getTrendingQuestions>>,
-  TError = ErrorType<unknown>,
->(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof getTrendingQuestions>>,
-    TError,
-    TData
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-  const queryOptions = getGetTrendingQuestionsQueryOptions(options);
-
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
+export const GetTrendingQuestionsResponseItem = zod.object({
+  id: zod.number(),
+  title: zod.string(),
+  body: zod.string(),
+  category: zod.string(),
+  tags: zod.array(zod.string()),
+  status: zod.enum(["open", "answered", "ai_answered"]),
+  voteCount: zod.number(),
+  answerCount: zod.number(),
+  viewCount: zod.number(),
+  authorId: zod.number(),
+  authorUsername: zod.string(),
+  authorDisplayName: zod.string(),
+  authorAvatarUrl: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+export const GetTrendingQuestionsResponse = zod.array(
+  GetTrendingQuestionsResponseItem,
+);
 
 /**
  * @summary Get question counts by category
  */
-export const getGetCategoryStatsUrl = () => {
-  return `/api/stats/categories`;
-};
-
-export const getCategoryStats = async (
-  options?: RequestInit,
-): Promise<CategoryStat[]> => {
-  return customFetch<CategoryStat[]>(getGetCategoryStatsUrl(), {
-    ...options,
-    method: "GET",
-  });
-};
-
-export const getGetCategoryStatsQueryKey = () => {
-  return [`/api/stats/categories`] as const;
-};
-
-export const getGetCategoryStatsQueryOptions = <
-  TData = Awaited<ReturnType<typeof getCategoryStats>>,
-  TError = ErrorType<unknown>,
->(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof getCategoryStats>>,
-    TError,
-    TData
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
-
-  const queryKey = queryOptions?.queryKey ?? getGetCategoryStatsQueryKey();
-
-  const queryFn: QueryFunction<
-    Awaited<ReturnType<typeof getCategoryStats>>
-  > = ({ signal }) => getCategoryStats({ signal, ...requestOptions });
-
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getCategoryStats>>,
-    TError,
-    TData
-  > & { queryKey: QueryKey };
-};
-
-export type GetCategoryStatsQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getCategoryStats>>
->;
-export type GetCategoryStatsQueryError = ErrorType<unknown>;
-
-/**
- * @summary Get question counts by category
- */
-
-export function useGetCategoryStats<
-  TData = Awaited<ReturnType<typeof getCategoryStats>>,
-  TError = ErrorType<unknown>,
->(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof getCategoryStats>>,
-    TError,
-    TData
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-  const queryOptions = getGetCategoryStatsQueryOptions(options);
-
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
+export const GetCategoryStatsResponseItem = zod.object({
+  category: zod.string(),
+  count: zod.number(),
+});
+export const GetCategoryStatsResponse = zod.array(GetCategoryStatsResponseItem);
 
 /**
  * @summary Get recent community activity feed
  */
-export const getGetRecentActivityUrl = () => {
-  return `/api/stats/recent-activity`;
-};
-
-export const getRecentActivity = async (
-  options?: RequestInit,
-): Promise<ActivityItem[]> => {
-  return customFetch<ActivityItem[]>(getGetRecentActivityUrl(), {
-    ...options,
-    method: "GET",
-  });
-};
-
-export const getGetRecentActivityQueryKey = () => {
-  return [`/api/stats/recent-activity`] as const;
-};
-
-export const getGetRecentActivityQueryOptions = <
-  TData = Awaited<ReturnType<typeof getRecentActivity>>,
-  TError = ErrorType<unknown>,
->(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof getRecentActivity>>,
-    TError,
-    TData
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
-
-  const queryKey = queryOptions?.queryKey ?? getGetRecentActivityQueryKey();
-
-  const queryFn: QueryFunction<
-    Awaited<ReturnType<typeof getRecentActivity>>
-  > = ({ signal }) => getRecentActivity({ signal, ...requestOptions });
-
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getRecentActivity>>,
-    TError,
-    TData
-  > & { queryKey: QueryKey };
-};
-
-export type GetRecentActivityQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getRecentActivity>>
->;
-export type GetRecentActivityQueryError = ErrorType<unknown>;
-
-/**
- * @summary Get recent community activity feed
- */
-
-export function useGetRecentActivity<
-  TData = Awaited<ReturnType<typeof getRecentActivity>>,
-  TError = ErrorType<unknown>,
->(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof getRecentActivity>>,
-    TError,
-    TData
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-  const queryOptions = getGetRecentActivityQueryOptions(options);
-
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
+export const GetRecentActivityResponseItem = zod.object({
+  id: zod.number(),
+  type: zod.enum(["question", "answer", "ai_answer"]),
+  title: zod.string(),
+  username: zod.string(),
+  createdAt: zod.coerce.date(),
+});
+export const GetRecentActivityResponse = zod.array(
+  GetRecentActivityResponseItem,
+);
 
 /**
  * @summary Trigger AI to answer unanswered questions older than 24hrs
  */
-export const getTriggerAiAnswerCheckUrl = () => {
-  return `/api/ai/check-unanswered`;
-};
-
-export const triggerAiAnswerCheck = async (
-  options?: RequestInit,
-): Promise<AiCheckResult> => {
-  return customFetch<AiCheckResult>(getTriggerAiAnswerCheckUrl(), {
-    ...options,
-    method: "POST",
-  });
-};
-
-export const getTriggerAiAnswerCheckMutationOptions = <
-  TError = ErrorType<unknown>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof triggerAiAnswerCheck>>,
-    TError,
-    void,
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof triggerAiAnswerCheck>>,
-  TError,
-  void,
-  TContext
-> => {
-  const mutationKey = ["triggerAiAnswerCheck"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof triggerAiAnswerCheck>>,
-    void
-  > = () => {
-    return triggerAiAnswerCheck(requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type TriggerAiAnswerCheckMutationResult = NonNullable<
-  Awaited<ReturnType<typeof triggerAiAnswerCheck>>
->;
-
-export type TriggerAiAnswerCheckMutationError = ErrorType<unknown>;
-
-/**
- * @summary Trigger AI to answer unanswered questions older than 24hrs
- */
-export const useTriggerAiAnswerCheck = <
-  TError = ErrorType<unknown>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof triggerAiAnswerCheck>>,
-    TError,
-    void,
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationResult<
-  Awaited<ReturnType<typeof triggerAiAnswerCheck>>,
-  TError,
-  void,
-  TContext
-> => {
-  return useMutation(getTriggerAiAnswerCheckMutationOptions(options));
-};
+export const TriggerAiAnswerCheckResponse = zod.object({
+  processed: zod.number(),
+  answered: zod.number(),
+});
