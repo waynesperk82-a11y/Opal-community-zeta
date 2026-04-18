@@ -1,7 +1,5 @@
 import { useEffect, useState, type ComponentType } from "react";
 
-import { modules as discoveredModules } from "./.generated/mockup-components";
-
 type ModuleMap = Record<string, () => Promise<Record<string, unknown>>>;
 
 function _resolveComponent(
