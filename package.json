@@ -74,6 +74,7 @@
     "zod": "latest"
   },
   "dependencies": {
-    "@clerk/react": "^6.4.0"
+  "@clerk/react": "^6.4.0",
+  "ts-node": "^10.9.1"
   }
 }
