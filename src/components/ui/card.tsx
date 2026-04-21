@@ -5,9 +5,9 @@ interface CardProps {
   className?: string;
 }
 
-export const Card = ({ children, className = "" }: CardProps) => {
+export const Card: React.FC<CardProps> = ({ children, className }) => {
   return (
-    <div className={`border rounded-xl p-4 shadow-sm bg-white ${className}`}>
+    <div className={`border rounded-xl p-4 shadow-sm bg-white ${className ?? ""}`}>
       {children}
     </div>
   );
