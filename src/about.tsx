@@ -1,4 +1,4 @@
-import { Layout } from "@/components/layout";
+import Layout from "@/components/layout"
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BrainCircuit, CheckCircle2, Clock, MessageSquare, ShieldCheck, Users } from "lucide-react";
