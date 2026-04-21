@@ -60,11 +60,11 @@ export function About() {
 function Feature({ icon: Icon, title, text }: { icon: any; title: string; text: string }) {
   return (
     <Card className="rounded-2xl hover:border-primary/40 transition-colors">
-      <CardContent className="p-6">
+  
         <Icon className="h-7 w-7 text-primary mb-4" />
         <h3 className="font-display font-bold text-xl mb-2">{title}</h3>
         <p className="text-sm text-muted-foreground leading-relaxed">{text}</p>
-      </CardContent>
+      
     </Card>
   );
 }
