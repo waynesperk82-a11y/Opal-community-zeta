@@ -30,7 +30,7 @@ export function About() {
         <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
           <Card className="rounded-3xl overflow-hidden">
             <div className="h-2 bg-opal-gradient" />
-            <CardContent className="p-8 space-y-5">
+            
               <h2 className="text-3xl font-display font-bold">How the website works</h2>
               <div className="space-y-4 text-muted-foreground leading-relaxed">
                 <p>
@@ -43,7 +43,7 @@ export function About() {
                   The goal is to combine human experience with AI verification so the answers feel fast, helpful, and more reliable than a normal forum.
                 </p>
               </div>
-            </CardContent>
+            
           </Card>
 
           <div className="space-y-4">
