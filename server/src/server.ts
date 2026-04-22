@@ -9,6 +9,9 @@ app.use(express.json());
 app.get("/", (req: Request, res: Response) => {
   res.send("Backend is running 🚀");
 });
+app.get("/api/health", (req: Request, res: Response) => {
+  res.json({ status: "OK" });
+});
 
 const PORT = process.env.PORT || 5000;
 
