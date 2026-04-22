@@ -7,13 +7,11 @@ app.use(cors());
 app.use(express.json());
 
 app.get("/", (req: Request, res: Response) => {
-  res.send("Backend is running 🚀");
+  res.json({ message: "Backend is connected successfully 🚀" });
 });
+
 app.get("/api/health", (req: Request, res: Response) => {
   res.json({ status: "OK" });
-});
-app.get("/", (req, res) => {
-  res.json({ message: "Backend is connected successfully 🚀" });
 });
 
 const PORT = process.env.PORT || 5000;
