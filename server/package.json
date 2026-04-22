@@ -1,5 +1,5 @@
 {
-  "name": "backend",
+  "name": "opal-zeta-backend",
   "version": "1.0.0",
   "main": "dist/server.js",
   "scripts": {
@@ -7,13 +7,13 @@
     "start": "node dist/server.js"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "cors": "^2.8.5"
+    "cors": "^2.8.5",
+    "express": "^4.18.2"
   },
-"devDependencies": {
-  "typescript": "^5.0.0",
-  "@types/node": "^20.0.0",
-  "@types/express": "^4.17.21",
-  "@types/cors": "^2.8.17"
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
   }
 }
