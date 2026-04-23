@@ -1,42 +1,59 @@
-import { useEffect, useState } from "react";
 import { Link } from "wouter";
 
-interface Question {
-  _id: string;
-  question: string;
-}
-
 function Feed() {
-  const [questions, setQuestions] = useState<Question[]>([]);
-
-  useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL}/questions`)
-      .then(res => res.json())
-      .then(data => setQuestions(data))
-      .catch(() => console.log("Failed to fetch questions"));
-  }, []);
-
   return (
-    <div className="min-h-screen bg-slate-950 text-white px-8 py-12">
+    <div className="min-h-screen bg-slate-950 text-white p-6">
 
-      <h1 className="text-4xl font-bold mb-10 text-center">
-        Community Questions
-      </h1>
+      {/* HEADER */}
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">Community Questions</h1>
+        <Link href="/">
+          <button className="px-4 py-2 bg-slate-800 rounded-xl hover:bg-slate-700 transition">
+            Home
+          </button>
+        </Link>
+      </div>
 
-      <div className="max-w-3xl mx-auto space-y-6">
-        {questions.length === 0 && (
-          <p className="text-slate-400 text-center">
-            No questions yet.
+      {/* QUESTIONS LIST */}
+      <div className="space-y-6">
+
+        {/* Question Card */}
+        <div className="bg-slate-900 p-6 rounded-2xl hover:bg-slate-800 transition">
+          <h2 className="text-xl font-semibold mb-2">
+            How do I learn React fast?
+          </h2>
+          <p className="text-slate-400 mb-3">
+            Asked by John • 5 answers
           </p>
-        )}
-
-        {questions.map((q) => (
-          <Link key={q._id} href={`/question/${q._id}`}>
-            <div className="bg-slate-800 p-6 rounded-xl hover:bg-slate-700 transition cursor-pointer">
-              <p className="text-lg">{q.question}</p>
-            </div>
+          <Link href="/question/1">
+            <button className="text-blue-400 hover:underline">
+              View Answers
+            </button>
           </Link>
-        ))}
+        </div>
+
+        <div className="bg-slate-900 p-6 rounded-2xl hover:bg-slate-800 transition">
+          <h2 className="text-xl font-semibold mb-2">
+            What is the best way to make money online?
+          </h2>
+          <p className="text-slate-400 mb-3">
+            Asked by Sarah • 2 answers
+          </p>
+          <Link href="/question/2">
+            <button className="text-blue-400 hover:underline">
+              View Answers
+            </button>
+          </Link>
+        </div>
+
+      </div>
+
+      {/* ADS SECTION */}
+      <div className="mt-12 bg-slate-800 p-6 rounded-2xl text-center">
+        <p className="text-slate-400 mb-2">Advertisement</p>
+        <div className="h-24 bg-slate-700 rounded-xl flex items-center justify-center">
+          Your Ad Here
+        </div>
       </div>
 
     </div>
