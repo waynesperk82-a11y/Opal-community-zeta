@@ -2,156 +2,82 @@ import { Link } from "wouter";
 
 function Home() {
   return (
-    <div style={{ fontFamily: "Arial, sans-serif", backgroundColor: "#f8fafc" }}>
-      
+    <div className="min-h-screen flex flex-col">
+
       {/* NAVBAR */}
-      <nav
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          padding: "20px 40px",
-          backgroundColor: "#0f172a",
-          color: "white",
-        }}
-      >
-        <h2 style={{ margin: 0 }}>Opal Zeta</h2>
+      <header className="flex justify-between items-center px-8 py-4 bg-slate-900 border-b border-slate-800">
+        <h1 className="text-2xl font-bold text-blue-500">
+          Opal Zeta
+        </h1>
 
-        <div>
-          <Link href="/login">
-            <button
-              style={{
-                marginRight: "15px",
-                padding: "8px 18px",
-                backgroundColor: "transparent",
-                border: "1px solid white",
-                color: "white",
-                borderRadius: "6px",
-                cursor: "pointer",
-              }}
-            >
-              Login
-            </button>
-          </Link>
+        <div className="space-x-4">
+          <button className="px-4 py-2 bg-slate-800 rounded-lg hover:bg-slate-700 transition">
+            Login
+          </button>
 
-          <Link href="/signup">
-            <button
-              style={{
-                padding: "8px 18px",
-                backgroundColor: "#3b82f6",
-                border: "none",
-                color: "white",
-                borderRadius: "6px",
-                cursor: "pointer",
-              }}
-            >
-              Sign Up
-            </button>
-          </Link>
+          <button className="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-500 transition">
+            Sign Up
+          </button>
         </div>
-      </nav>
+      </header>
 
       {/* HERO SECTION */}
-      <section
-        style={{
-          textAlign: "center",
-          padding: "100px 20px",
-          background: "linear-gradient(to right, #1e293b, #0f172a)",
-          color: "white",
-        }}
-      >
-        <h1 style={{ fontSize: "48px", marginBottom: "20px" }}>
-          Ask. Answer. Learn. Grow.
-        </h1>
-        <p style={{ fontSize: "18px", maxWidth: "600px", margin: "0 auto" }}>
-          Opal Zeta is a powerful community platform where people ask questions,
-          get answers from real humans, and when no one responds — AI steps in.
+      <section className="flex flex-col items-center justify-center text-center py-20 px-6">
+        <h2 className="text-5xl font-bold mb-6">
+          Ask. Answer. Grow.
+        </h2>
+
+        <p className="text-slate-400 max-w-2xl mb-8">
+          Opal Zeta is a powerful community where people ask real questions,
+          get real answers from real people — and when nobody answers,
+          AI steps in instantly.
         </p>
 
-        <div style={{ marginTop: "30px" }}>
-          <Link href="/ask">
-            <button
-              style={{
-                padding: "12px 28px",
-                fontSize: "16px",
-                backgroundColor: "#3b82f6",
-                border: "none",
-                color: "white",
-                borderRadius: "8px",
-                cursor: "pointer",
-              }}
-            >
-              Ask a Question
-            </button>
-          </Link>
+        <Link href="/ask">
+          <button className="px-8 py-3 bg-blue-600 rounded-xl text-lg hover:bg-blue-500 transition">
+            Ask a Question
+          </button>
+        </Link>
+      </section>
+
+      {/* FEATURES */}
+      <section className="grid md:grid-cols-3 gap-8 px-10 py-20 bg-slate-900">
+        <div className="bg-slate-800 p-6 rounded-xl">
+          <h3 className="text-xl font-semibold mb-3">Community Powered</h3>
+          <p className="text-slate-400">
+            Get answers from real people with experience.
+          </p>
+        </div>
+
+        <div className="bg-slate-800 p-6 rounded-xl">
+          <h3 className="text-xl font-semibold mb-3">AI Backup</h3>
+          <p className="text-slate-400">
+            No question goes unanswered. AI responds instantly.
+          </p>
+        </div>
+
+        <div className="bg-slate-800 p-6 rounded-xl">
+          <h3 className="text-xl font-semibold mb-3">Smart Discussions</h3>
+          <p className="text-slate-400">
+            Clean threads. Helpful answers. Real value.
+          </p>
         </div>
       </section>
 
-      {/* HOW IT WORKS */}
-      <section style={{ padding: "80px 20px", textAlign: "center" }}>
-        <h2>How It Works</h2>
+      {/* ADS SECTION */}
+      <section className="px-10 py-16 bg-slate-950 text-center border-t border-slate-800">
+        <p className="text-slate-500 mb-4">Advertisement</p>
 
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            gap: "40px",
-            marginTop: "40px",
-            flexWrap: "wrap",
-          }}
-        >
-          <div style={{ maxWidth: "250px" }}>
-            <h3>1️⃣ Ask</h3>
-            <p>Post your question to the community.</p>
-          </div>
-
-          <div style={{ maxWidth: "250px" }}>
-            <h3>2️⃣ Community Answers</h3>
-            <p>Real people share real knowledge.</p>
-          </div>
-
-          <div style={{ maxWidth: "250px" }}>
-            <h3>3️⃣ AI Backup</h3>
-            <p>If no one answers, AI responds instantly.</p>
-          </div>
-        </div>
-      </section>
-
-      {/* AD SECTION */}
-      <section
-        style={{
-          padding: "40px",
-          backgroundColor: "#e2e8f0",
-          textAlign: "center",
-        }}
-      >
-        <h3>Sponsored</h3>
-        <div
-          style={{
-            marginTop: "20px",
-            padding: "40px",
-            backgroundColor: "white",
-            borderRadius: "10px",
-            maxWidth: "800px",
-            marginLeft: "auto",
-            marginRight: "auto",
-          }}
-        >
-          <p>Ad Space — Your future monetization goes here </p>
+        <div className="bg-slate-800 h-24 rounded-xl flex items-center justify-center text-slate-400">
+          Your Ad Here
         </div>
       </section>
 
       {/* FOOTER */}
-      <footer
-        style={{
-          padding: "30px",
-          backgroundColor: "#0f172a",
-          color: "white",
-          textAlign: "center",
-        }}
-      >
-        <p>© 2026 Opal Zeta. Built for the community.</p>
+      <footer className="mt-auto bg-slate-900 border-t border-slate-800 py-6 text-center text-slate-500">
+        © 2026 Opal Zeta. All rights reserved.
       </footer>
+
     </div>
   );
 }
