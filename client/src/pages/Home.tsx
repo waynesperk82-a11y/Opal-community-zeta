@@ -36,6 +36,11 @@ function Home() {
         <Link href="/ask">
           <button className="px-8 py-3 bg-blue-600 rounded-xl text-lg hover:bg-blue-500 transition">
             Ask a Question
+            <Link href="/feed">
+  <button className="mt-4 px-8 py-3 bg-slate-800 rounded-xl hover:bg-slate-700 transition">
+    Browse Questions
+  </button>
+</Link>
           </button>
         </Link>
       </section>
