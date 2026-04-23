@@ -1,142 +1,156 @@
 import { Link } from "wouter";
+
 function Home() {
   return (
-    <div style={{ fontFamily: "Arial, sans-serif" }}>
+    <div style={{ fontFamily: "Arial, sans-serif", backgroundColor: "#f8fafc" }}>
       
-      {/* HEADER */}
-      <header
+      {/* NAVBAR */}
+      <nav
         style={{
-          padding: "15px 20px",
-          backgroundColor: "#0f172a",
-          color: "white",
           display: "flex",
           justifyContent: "space-between",
+          alignItems: "center",
+          padding: "20px 40px",
+          backgroundColor: "#0f172a",
+          color: "white",
         }}
       >
-        <h2>Opal Zeta </h2>
+        <h2 style={{ margin: 0 }}>Opal Zeta</h2>
+
         <div>
-          <button style={{ marginRight: "10px" }}>Login</button>
-          <button>Sign Up</button>
-        </div>
-      </header>
+          <Link href="/login">
+            <button
+              style={{
+                marginRight: "15px",
+                padding: "8px 18px",
+                backgroundColor: "transparent",
+                border: "1px solid white",
+                color: "white",
+                borderRadius: "6px",
+                cursor: "pointer",
+              }}
+            >
+              Login
+            </button>
+          </Link>
 
-      {/* MAIN LAYOUT */}
-      <div
+          <Link href="/signup">
+            <button
+              style={{
+                padding: "8px 18px",
+                backgroundColor: "#3b82f6",
+                border: "none",
+                color: "white",
+                borderRadius: "6px",
+                cursor: "pointer",
+              }}
+            >
+              Sign Up
+            </button>
+          </Link>
+        </div>
+      </nav>
+
+      {/* HERO SECTION */}
+      <section
         style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 3fr 1fr",
-          gap: "20px",
-          padding: "20px",
+          textAlign: "center",
+          padding: "100px 20px",
+          background: "linear-gradient(to right, #1e293b, #0f172a)",
+          color: "white",
         }}
       >
-        {/* LEFT SIDEBAR (ADS READY) */}
-        <aside
+        <h1 style={{ fontSize: "48px", marginBottom: "20px" }}>
+          Ask. Answer. Learn. Grow.
+        </h1>
+        <p style={{ fontSize: "18px", maxWidth: "600px", margin: "0 auto" }}>
+          Opal Zeta is a powerful community platform where people ask questions,
+          get answers from real humans, and when no one responds — AI steps in.
+        </p>
+
+        <div style={{ marginTop: "30px" }}>
+          <Link href="/ask">
+            <button
+              style={{
+                padding: "12px 28px",
+                fontSize: "16px",
+                backgroundColor: "#3b82f6",
+                border: "none",
+                color: "white",
+                borderRadius: "8px",
+                cursor: "pointer",
+              }}
+            >
+              Ask a Question
+            </button>
+          </Link>
+        </div>
+      </section>
+
+      {/* HOW IT WORKS */}
+      <section style={{ padding: "80px 20px", textAlign: "center" }}>
+        <h2>How It Works</h2>
+
+        <div
           style={{
-            border: "1px solid #ddd",
-            padding: "15px",
-            borderRadius: "8px",
-            minHeight: "300px",
+            display: "flex",
+            justifyContent: "center",
+            gap: "40px",
+            marginTop: "40px",
+            flexWrap: "wrap",
           }}
         >
-          <h4>Sponsored</h4>
-          <div
-            style={{
-              marginTop: "10px",
-              height: "250px",
-              backgroundColor: "#f1f5f9",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            Ad Space
+          <div style={{ maxWidth: "250px" }}>
+            <h3>1️⃣ Ask</h3>
+            <p>Post your question to the community.</p>
           </div>
-        </aside>
 
-        {/* MAIN CONTENT */}
-        <main>
-          <section style={{ textAlign: "center", marginBottom: "40px" }}>
-            <h1>Ask. Answer. Learn.</h1>
-            <p style={{ color: "gray" }}>
-              A community-powered Q&A platform with built-in AI assistance.
-            </p>
+          <div style={{ maxWidth: "250px" }}>
+            <h3>2️⃣ Community Answers</h3>
+            <p>Real people share real knowledge.</p>
+          </div>
 
-            <div style={{ marginTop: "20px" }}>
-              <button
-                style={{
-                  padding: "10px 20px",
-                  marginRight: "10px",
-                  backgroundColor: "#4f46e5",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "5px",
-                }}
-              >
-                Ask Question
-              </button>
+          <div style={{ maxWidth: "250px" }}>
+            <h3>3️⃣ AI Backup</h3>
+            <p>If no one answers, AI responds instantly.</p>
+          </div>
+        </div>
+      </section>
 
-              <button
-                style={{
-                  padding: "10px 20px",
-                  backgroundColor: "black",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "5px",
-                }}
-              >
-                Ask AI 
-              </button>
-            </div>
-          </section>
-
-          {/* HOW IT WORKS */}
-          <section>
-            <h2>How It Works</h2>
-            <ul style={{ marginTop: "15px", lineHeight: "1.8" }}>
-              <li> Post your question</li>
-              <li>Community answers</li>
-              <li> AI responds if unanswered</li>
-              <li>Learn and grow together</li>
-            </ul>
-          </section>
-        </main>
-
-        {/* RIGHT SIDEBAR (ADS READY) */}
-        <aside
+      {/* AD SECTION */}
+      <section
+        style={{
+          padding: "40px",
+          backgroundColor: "#e2e8f0",
+          textAlign: "center",
+        }}
+      >
+        <h3>Sponsored</h3>
+        <div
           style={{
-            border: "1px solid #ddd",
-            padding: "15px",
-            borderRadius: "8px",
-            minHeight: "300px",
+            marginTop: "20px",
+            padding: "40px",
+            backgroundColor: "white",
+            borderRadius: "10px",
+            maxWidth: "800px",
+            marginLeft: "auto",
+            marginRight: "auto",
           }}
         >
-          <h4>Advertisement</h4>
-          <div
-            style={{
-              marginTop: "10px",
-              height: "250px",
-              backgroundColor: "#f1f5f9",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            Ad Space
-          </div>
-        </aside>
-      </div>
+          <p>Ad Space — Your future monetization goes here </p>
+        </div>
+      </section>
 
       {/* FOOTER */}
       <footer
         style={{
-          marginTop: "40px",
-          padding: "20px",
-          textAlign: "center",
+          padding: "30px",
           backgroundColor: "#0f172a",
           color: "white",
+          textAlign: "center",
         }}
       >
-        © {new Date().getFullYear()} Opal Zeta. All rights reserved.
+        <p>© 2026 Opal Zeta. Built for the community.</p>
       </footer>
     </div>
   );
