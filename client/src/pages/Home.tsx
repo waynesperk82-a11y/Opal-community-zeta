@@ -1,3 +1,4 @@
+import { Link } from "wouter";
 function Home() {
   return (
     <div style={{ fontFamily: "Arial, sans-serif" }}>
