@@ -4,7 +4,7 @@ import cors from "cors";
 const app = express();
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "10mb" })); // allow base64 images
 
 /* ---------------- TYPES ---------------- */
 
@@ -18,6 +18,7 @@ type Question = {
   id: number;
   title: string;
   author: string;
+  image?: string; // 👈 image support
   answers: Answer[];
 };
 
@@ -38,6 +39,7 @@ let questions: Question[] = [
     id: 1,
     title: "How do I connect React to a backend?",
     author: "Wayne",
+    image: undefined,
     answers: [],
   },
 ];
@@ -59,9 +61,9 @@ app.get("/questions/:id", (req: Request, res: Response) => {
   res.json(question);
 });
 
-// POST new question
+// POST new question (with optional image)
 app.post("/questions", (req: Request, res: Response) => {
-  const { title, author } = req.body;
+  const { title, author, image } = req.body;
 
   if (!title || !author) {
     return res.status(400).json({
@@ -73,6 +75,7 @@ app.post("/questions", (req: Request, res: Response) => {
     id: questions.length + 1,
     title,
     author,
+    image, // 👈 store image
     answers: [],
   };
 
