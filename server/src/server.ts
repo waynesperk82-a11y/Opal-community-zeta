@@ -6,6 +6,21 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+/* ---------------- TYPES ---------------- */
+
+type Answer = {
+  id: number;
+  author: string;
+  content: string;
+};
+
+type Question = {
+  id: number;
+  title: string;
+  author: string;
+  answers: Answer[];
+};
+
 /* ---------------- ROOT ROUTES ---------------- */
 
 app.get("/", (req: Request, res: Response) => {
@@ -18,8 +33,7 @@ app.get("/api/health", (req: Request, res: Response) => {
 
 /* ---------------- QUESTIONS SYSTEM ---------------- */
 
-// Temporary in-memory storage
-let questions = [
+let questions: Question[] = [
   {
     id: 1,
     title: "How do I connect React to a backend?",
@@ -55,7 +69,7 @@ app.post("/questions", (req: Request, res: Response) => {
     });
   }
 
-  const newQuestion = {
+  const newQuestion: Question = {
     id: questions.length + 1,
     title,
     author,
@@ -84,7 +98,7 @@ app.post("/questions/:id/answers", (req: Request, res: Response) => {
     });
   }
 
-  const newAnswer = {
+  const newAnswer: Answer = {
     id: question.answers.length + 1,
     author,
     content,
