@@ -11,13 +11,13 @@ function Home() {
         </h1>
 
         <div className="space-x-4">
-          <button className="px-4 py-2 bg-slate-800 rounded-lg hover:bg-slate-700 transition">
-            Login
-          </button>
+          <button className="px-4 py-2 bg-slate-800 text-white rounded">
+  Login
+</button>
 
-          <button className="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-500 transition">
-            Sign Up
-          </button>
+<button className="px-4 py-2 bg-blue-600 text-white rounded">
+  Sign Up
+</button>
         </div>
       </header>
 
