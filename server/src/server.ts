@@ -33,6 +33,18 @@ app.get("/questions", (req: Request, res: Response) => {
   res.json(questions);
 });
 
+// GET single question by ID
+app.get("/questions/:id", (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+  const question = questions.find((q) => q.id === id);
+
+  if (!question) {
+    return res.status(404).json({ error: "Question not found" });
+  }
+
+  res.json(question);
+});
+
 // POST new question
 app.post("/questions", (req: Request, res: Response) => {
   const { title, author } = req.body;
@@ -53,6 +65,34 @@ app.post("/questions", (req: Request, res: Response) => {
   questions.push(newQuestion);
 
   res.status(201).json(newQuestion);
+});
+
+// POST answer to a question
+app.post("/questions/:id/answers", (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+  const { author, content } = req.body;
+
+  const question = questions.find((q) => q.id === id);
+
+  if (!question) {
+    return res.status(404).json({ error: "Question not found" });
+  }
+
+  if (!author || !content) {
+    return res.status(400).json({
+      error: "Author and content are required",
+    });
+  }
+
+  const newAnswer = {
+    id: question.answers.length + 1,
+    author,
+    content,
+  };
+
+  question.answers.push(newAnswer);
+
+  res.status(201).json(newAnswer);
 });
 
 /* ---------------- SERVER START ---------------- */
