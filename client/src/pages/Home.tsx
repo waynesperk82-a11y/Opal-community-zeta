@@ -37,14 +37,19 @@ function Home() {
           AI steps in instantly.
         </p>
 
-        <Link href="/ask">
-          <button className="px-8 py-3 bg-blue-600 rounded-xl text-lg hover:bg-blue-500 transition">
-            Ask a Question
-            <Link href="/feed">
-  <button className="mt-4 px-8 py-3 bg-slate-800 rounded-xl hover:bg-slate-700 transition">
-    Browse Questions
-  </button>
-</Link>
+        <div className="flex flex-col items-center">
+  <Link href="/ask">
+    <button className="px-8 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition duration-300">
+      Ask a Question
+    </button>
+  </Link>
+
+  <Link href="/questions">
+    <button className="mt-4 px-8 py-3 bg-slate-800 text-white rounded-xl hover:bg-slate-900 transition duration-300">
+      Browse Questions
+    </button>
+  </Link>
+</div>
           </button>
         </Link>
       </section>
