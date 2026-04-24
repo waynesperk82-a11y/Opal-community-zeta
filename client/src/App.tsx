@@ -1,30 +1,27 @@
 import { Route, Switch } from "wouter";
 import Home from "./pages/Home";
-
-function Login() {
-  return (
-    <div style={{ padding: "2rem" }}>
-      <h1>Login Page</h1>
-      <p>This is the login page.</p>
-    </div>
-  );
-}
-
-function Signup() {
-  return (
-    <div style={{ padding: "2rem" }}>
-      <h1>Sign Up Page</h1>
-      <p>This is the sign up page.</p>
-    </div>
-  );
-}
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import Ask from "./pages/Ask";
+import Feed from "./pages/Feed";
+import NotFound from "./pages/NotFound";
 
 function App() {
   return (
     <Switch>
+      {/* Home */}
       <Route path="/" component={Home} />
+
+      {/* Auth */}
       <Route path="/login" component={Login} />
       <Route path="/signup" component={Signup} />
+
+      {/* Main App */}
+      <Route path="/ask" component={Ask} />
+      <Route path="/feed" component={Feed} />
+
+      {/* Fallback */}
+      <Route component={NotFound} />
     </Switch>
   );
 }
