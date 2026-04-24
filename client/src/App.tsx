@@ -20,7 +20,7 @@ function App() {
       <Route path="/ask" component={Ask} />
       <Route path="/feed" component={Feed} />
 
-      {/* Fallback */}
+      {/* Catch all */}
       <Route component={NotFound} />
     </Switch>
   );
