@@ -1,26 +1,36 @@
 import express, { Request, Response } from "express";
 import cors from "cors";
+import mongoose from "mongoose";
 
 const app = express();
 
 app.use(cors());
-app.use(express.json({ limit: "10mb" })); // allow base64 images
+app.use(express.json({ limit: "10mb" }));
 
-/* ---------------- TYPES ---------------- */
+/* ---------------- MONGODB CONNECTION ---------------- */
 
-type Answer = {
-  id: number;
-  author: string;
-  content: string;
-};
+const MONGO_URI = process.env.MONGO_URI || "";
 
-type Question = {
-  id: number;
-  title: string;
-  author: string;
-  image?: string; // 👈 image support
-  answers: Answer[];
-};
+mongoose
+  .connect(MONGO_URI)
+  .then(() => console.log("MongoDB Connected ✅"))
+  .catch((err) => console.error("MongoDB Error ❌", err));
+
+/* ---------------- SCHEMAS ---------------- */
+
+const answerSchema = new mongoose.Schema({
+  author: String,
+  content: String,
+});
+
+const questionSchema = new mongoose.Schema({
+  title: String,
+  author: String,
+  image: String,
+  answers: [answerSchema],
+});
+
+const Question = mongoose.model("Question", questionSchema);
 
 /* ---------------- ROOT ROUTES ---------------- */
 
@@ -28,41 +38,31 @@ app.get("/", (req: Request, res: Response) => {
   res.json({ message: "Backend is connected successfully 🚀" });
 });
 
-app.get("/api/health", (req: Request, res: Response) => {
-  res.json({ status: "OK" });
-});
-
-/* ---------------- QUESTIONS SYSTEM ---------------- */
-
-let questions: Question[] = [
-  {
-    id: 1,
-    title: "How do I connect React to a backend?",
-    author: "Wayne",
-    image: undefined,
-    answers: [],
-  },
-];
+/* ---------------- QUESTIONS ---------------- */
 
 // GET all questions
-app.get("/questions", (req: Request, res: Response) => {
+app.get("/questions", async (req: Request, res: Response) => {
+  const questions = await Question.find().sort({ _id: -1 });
   res.json(questions);
 });
 
-// GET single question by ID
-app.get("/questions/:id", (req: Request, res: Response) => {
-  const id = Number(req.params.id);
-  const question = questions.find((q) => q.id === id);
+// GET single question
+app.get("/questions/:id", async (req: Request, res: Response) => {
+  try {
+    const question = await Question.findById(req.params.id);
 
-  if (!question) {
-    return res.status(404).json({ error: "Question not found" });
+    if (!question) {
+      return res.status(404).json({ error: "Question not found" });
+    }
+
+    res.json(question);
+  } catch {
+    res.status(400).json({ error: "Invalid ID" });
   }
-
-  res.json(question);
 });
 
-// POST new question (with optional image)
-app.post("/questions", (req: Request, res: Response) => {
+// POST new question
+app.post("/questions", async (req: Request, res: Response) => {
   const { title, author, image } = req.body;
 
   if (!title || !author) {
@@ -71,45 +71,33 @@ app.post("/questions", (req: Request, res: Response) => {
     });
   }
 
-  const newQuestion: Question = {
-    id: questions.length + 1,
+  const newQuestion = new Question({
     title,
     author,
-    image, // 👈 store image
+    image,
     answers: [],
-  };
+  });
 
-  questions.push(newQuestion);
+  await newQuestion.save();
 
   res.status(201).json(newQuestion);
 });
 
-// POST answer to a question
-app.post("/questions/:id/answers", (req: Request, res: Response) => {
-  const id = Number(req.params.id);
+// POST answer
+app.post("/questions/:id/answers", async (req: Request, res: Response) => {
   const { author, content } = req.body;
 
-  const question = questions.find((q) => q.id === id);
+  const question = await Question.findById(req.params.id);
 
   if (!question) {
     return res.status(404).json({ error: "Question not found" });
   }
 
-  if (!author || !content) {
-    return res.status(400).json({
-      error: "Author and content are required",
-    });
-  }
+  question.answers.push({ author, content });
 
-  const newAnswer: Answer = {
-    id: question.answers.length + 1,
-    author,
-    content,
-  };
+  await question.save();
 
-  question.answers.push(newAnswer);
-
-  res.status(201).json(newAnswer);
+  res.status(201).json(question);
 });
 
 /* ---------------- SERVER START ---------------- */
