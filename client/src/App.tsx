@@ -1,12 +1,11 @@
-import { BrowserRouter } from "react-router-dom";
+import { Route, Switch } from "wouter";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Ask from "./pages/Ask";
 import Feed from "./pages/Feed";
-import NotFound from "./pages/NotFound";
 
-function App() {
+export default function App() {
   return (
     <Switch>
       {/* Home */}
@@ -20,10 +19,8 @@ function App() {
       <Route path="/ask" component={Ask} />
       <Route path="/feed" component={Feed} />
 
-      {/* Catch all */}
-      <Route component={NotFound} />
+      {/* Fallback */}
+      <Route>Page Not Found</Route>
     </Switch>
   );
 }
-
-export default App;
