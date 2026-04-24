@@ -1,48 +1,50 @@
-            import { Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 
-function Home() {
+export default function Home() {
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-500 to-indigo-600 text-white flex flex-col">
 
-      {/* Header */}
-      <header className="bg-black text-white p-4 flex justify-between items-center">
-        <h1 className="text-xl font-bold">Opal Zeta</h1>
+      {/* Navbar */}
+      <header className="flex justify-between items-center p-6">
+        <h1 className="text-2xl font-bold tracking-wide">
+          Opal Zeta
+        </h1>
 
-        <nav className="flex gap-4">
+        <div className="flex gap-4">
           <Link to="/login">
-            <button className="bg-white text-black px-4 py-2 rounded-lg hover:bg-gray-200 transition">
+            <button className="px-5 py-2 rounded-lg bg-white text-purple-600 font-semibold hover:bg-gray-200 transition">
               Login
             </button>
           </Link>
 
           <Link to="/signup">
-            <button className="bg-blue-500 px-4 py-2 rounded-lg hover:bg-blue-600 transition">
+            <button className="px-5 py-2 rounded-lg bg-purple-800 hover:bg-purple-900 transition">
               Sign Up
             </button>
           </Link>
-        </nav>
+        </div>
       </header>
 
       {/* Hero Section */}
-      <section className="flex-1 flex flex-col items-center justify-center text-center p-6">
-        <h2 className="text-4xl font-bold mb-4">
-          Welcome to Opal Zeta 🚀
+      <section className="flex-1 flex flex-col items-center justify-center text-center px-6">
+        <h2 className="text-4xl md:text-5xl font-extrabold mb-6">
+          Ask. Answer. Grow.
         </h2>
 
-        <p className="text-gray-600 max-w-xl mb-6">
-          A powerful platform where users can explore, ask questions, 
-          browse content, and manage their profile securely.
+        <p className="max-w-xl text-lg text-purple-100 mb-8">
+          Opal Zeta is a community-driven platform where people ask questions,
+          share knowledge, and get AI-powered answers when the community can't respond.
         </p>
 
         <div className="flex gap-4">
           <Link to="/browse">
-            <button className="bg-green-500 text-white px-6 py-3 rounded-xl hover:bg-green-600 transition">
+            <button className="px-6 py-3 bg-white text-purple-600 font-bold rounded-xl shadow-lg hover:scale-105 transition">
               Browse Questions
             </button>
           </Link>
 
           <Link to="/ask">
-            <button className="bg-purple-500 text-white px-6 py-3 rounded-xl hover:bg-purple-600 transition">
+            <button className="px-6 py-3 bg-purple-900 rounded-xl shadow-lg hover:scale-105 transition">
               Ask a Question
             </button>
           </Link>
@@ -50,12 +52,9 @@ function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-black text-white text-center p-4">
-        © 2026 Opal Zeta. All rights reserved.
+      <footer className="text-center p-6 text-purple-200 text-sm">
+        © 2026 Opal Zeta. Built for curious minds 🚀
       </footer>
-
     </div>
   );
-}
-
-export default Home;
+}            
