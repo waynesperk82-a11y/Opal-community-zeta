@@ -33,9 +33,12 @@ export default function SignUp() {
           </button>
         </form>
 
-        <p className="text-center text-sm mt-6 text-gray-500">
-          Already have an account? Login
-        </p>
+        <p className="text-center mt-4">
+  Already have an account?{" "}
+  <Link to="/login" className="text-blue-600 font-semibold">
+    Login
+  </Link>
+</p>
       </div>
     </div>
   );
