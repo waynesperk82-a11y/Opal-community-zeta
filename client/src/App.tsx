@@ -1,13 +1,17 @@
-import { Route, Switch } from "wouter";
-import Home from "./pages/Home";
-import Feed from "./pages/Feed";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import Home from "./pages/Home"; // your main page
 
 function App() {
   return (
-    <Switch>
-      <Route path="/" component={Home} />
-      <Route path="/feed" component={Feed} />
-    </Switch>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+      </Routes>
+    </Router>
   );
 }
 
