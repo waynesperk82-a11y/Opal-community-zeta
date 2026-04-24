@@ -75,7 +75,8 @@
     "vaul": "^1.1.2",
     "vite": "latest",
     "wouter": "^3.3.5",
-    "zod": "latest"
+    "zod": "latest",
+    "react-router-dom": "^6.22.3"
   },
   "dependencies": {
   "@clerk/react": "^6.4.0",
