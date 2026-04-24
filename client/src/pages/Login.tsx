@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 to-black px-4">
@@ -27,9 +28,14 @@ export default function Login() {
           </button>
         </form>
 
-        <p className="text-center text-sm mt-6 text-gray-500">
-          Don’t have an account? Sign up
-        </p>
+        
+        <p className="text-sm text-center mt-4">
+  Don’t have an account?{" "}
+  <Link to="/signup" className="text-blue-500 underline">
+    Sign up
+  </Link>
+</p>
+      
       </div>
     </div>
   );
