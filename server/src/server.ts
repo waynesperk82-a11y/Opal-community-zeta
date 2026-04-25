@@ -16,36 +16,45 @@ if (!MONGO_URI) {
   process.exit(1);
 }
 
-console.log("Using Mongo URI:", MONGO_URI);
-
 mongoose
   .connect(MONGO_URI)
   .then(() => {
     console.log("MongoDB Connected ✅");
   })
   .catch((err: any) => {
-    console.error("MongoDB Error ❌");
-    console.error("Message:", err.message);
-    console.error("Full error:", err);
+    console.error("MongoDB Error ❌", err.message);
     process.exit(1);
   });
+
 /* ---------------- SCHEMAS ---------------- */
 
-const answerSchema = new mongoose.Schema({
-  author: String,
-  content: String,
-});
+const answerSchema = new mongoose.Schema(
+  {
+    author: String,
+    content: String,
+  },
+  { timestamps: true }
+);
 
-const questionSchema = new mongoose.Schema({
-  title: String,
-  author: String,
-  image: String,
-  answers: [answerSchema],
-});
+const questionSchema = new mongoose.Schema(
+  {
+    title: String,
+    author: String,
+    image: String,
+
+    // NEW FEATURES
+    tags: [String], // 🏷 categories
+    likes: { type: Number, default: 0 }, // ❤️ like counter
+    views: { type: Number, default: 0 }, // 👁 view counter
+
+    answers: [answerSchema],
+  },
+  { timestamps: true } // ⏱ createdAt + updatedAt
+);
 
 const Question = mongoose.model("Question", questionSchema);
 
-/* ---------------- ROOT ROUTES ---------------- */
+/* ---------------- ROOT ROUTE ---------------- */
 
 app.get("/", (req: Request, res: Response) => {
   res.json({ message: "Backend is connected successfully 🚀" });
@@ -53,13 +62,13 @@ app.get("/", (req: Request, res: Response) => {
 
 /* ---------------- QUESTIONS ---------------- */
 
-// GET all questions
+// GET all questions (newest first)
 app.get("/questions", async (req: Request, res: Response) => {
-  const questions = await Question.find().sort({ _id: -1 });
+  const questions = await Question.find().sort({ createdAt: -1 });
   res.json(questions);
 });
 
-// GET single question
+// GET single question + increase views 👁
 app.get("/questions/:id", async (req: Request, res: Response) => {
   try {
     const question = await Question.findById(req.params.id);
@@ -68,15 +77,27 @@ app.get("/questions/:id", async (req: Request, res: Response) => {
       return res.status(404).json({ error: "Question not found" });
     }
 
+    question.views += 1; // 👁 increment views
+    await question.save();
+
     res.json(question);
   } catch {
     res.status(400).json({ error: "Invalid ID" });
   }
 });
 
+// GET trending questions 🔥
+app.get("/questions/trending", async (req: Request, res: Response) => {
+  const trending = await Question.find()
+    .sort({ likes: -1, views: -1 })
+    .limit(5);
+
+  res.json(trending);
+});
+
 // POST new question
 app.post("/questions", async (req: Request, res: Response) => {
-  const { title, author, image } = req.body;
+  const { title, author, image, tags } = req.body;
 
   if (!title || !author) {
     return res.status(400).json({
@@ -88,6 +109,9 @@ app.post("/questions", async (req: Request, res: Response) => {
     title,
     author,
     image,
+    tags: tags || [],
+    likes: 0,
+    views: 0,
     answers: [],
   });
 
@@ -111,6 +135,20 @@ app.post("/questions/:id/answers", async (req: Request, res: Response) => {
   await question.save();
 
   res.status(201).json(question);
+});
+
+// POST like ❤️
+app.post("/questions/:id/like", async (req: Request, res: Response) => {
+  const question = await Question.findById(req.params.id);
+
+  if (!question) {
+    return res.status(404).json({ error: "Question not found" });
+  }
+
+  question.likes += 1;
+  await question.save();
+
+  res.json({ likes: question.likes });
 });
 
 /* ---------------- SERVER START ---------------- */
