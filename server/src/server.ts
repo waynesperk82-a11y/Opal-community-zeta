@@ -1,4 +1,4 @@
-import express, { Request, Response } from "express";
+import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import mongoose from "mongoose";
 
@@ -7,20 +7,37 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 
+/* ---------------- SIMPLE AUTH MIDDLEWARE ---------------- */
+// Reads username from request header
+const requireUser = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const username = req.headers.username as string;
+
+  if (!username) {
+    return res.status(401).json({
+      error: "Username required in headers",
+    });
+  }
+
+  (req as any).username = username;
+  next();
+};
+
 /* ---------------- MONGODB CONNECTION ---------------- */
 
 const MONGO_URI = process.env.MONGO_URI;
 
 if (!MONGO_URI) {
-  console.error("❌ MONGO_URI is NOT defined in environment variables");
+  console.error("❌ MONGO_URI is NOT defined");
   process.exit(1);
 }
 
 mongoose
   .connect(MONGO_URI)
-  .then(() => {
-    console.log("MongoDB Connected ✅");
-  })
+  .then(() => console.log("MongoDB Connected ✅"))
   .catch((err: any) => {
     console.error("MongoDB Error ❌", err.message);
     process.exit(1);
@@ -41,11 +58,10 @@ const questionSchema = new mongoose.Schema(
     title: String,
     author: String,
     image: String,
-
     tags: [String],
 
     likes: { type: Number, default: 0 },
-    likedBy: { type: [String], default: [] },
+    likedBy: [String],
 
     views: { type: Number, default: 0 },
 
@@ -56,7 +72,7 @@ const questionSchema = new mongoose.Schema(
 
 const Question = mongoose.model("Question", questionSchema);
 
-/* ---------------- ROOT ROUTE ---------------- */
+/* ---------------- ROOT ---------------- */
 
 app.get("/", (req: Request, res: Response) => {
   res.json({ message: "Backend is connected successfully 🚀" });
@@ -64,20 +80,19 @@ app.get("/", (req: Request, res: Response) => {
 
 /* ---------------- QUESTIONS ---------------- */
 
-// GET all questions (newest first)
+// GET all (newest first)
 app.get("/questions", async (req: Request, res: Response) => {
   const questions = await Question.find().sort({ createdAt: -1 });
   res.json(questions);
 });
 
-// GET single question + increase views 👁
+// GET single + increase views
 app.get("/questions/:id", async (req: Request, res: Response) => {
   try {
     const question = await Question.findById(req.params.id);
 
-    if (!question) {
-      return res.status(404).json({ error: "Question not found" });
-    }
+    if (!question)
+      return res.status(404).json({ error: "Not found" });
 
     question.views += 1;
     await question.save();
@@ -88,7 +103,7 @@ app.get("/questions/:id", async (req: Request, res: Response) => {
   }
 });
 
-// GET trending questions 🔥
+// GET trending
 app.get("/questions/trending", async (req: Request, res: Response) => {
   const trending = await Question.find()
     .sort({ likes: -1, views: -1 })
@@ -97,76 +112,141 @@ app.get("/questions/trending", async (req: Request, res: Response) => {
   res.json(trending);
 });
 
-// POST new question
-app.post("/questions", async (req: Request, res: Response) => {
-  const { title, author, image, tags } = req.body;
+// CREATE question
+app.post(
+  "/questions",
+  requireUser,
+  async (req: Request, res: Response) => {
+    const username = (req as any).username;
+    const { title, image, tags } = req.body;
 
-  if (!title || !author) {
-    return res.status(400).json({
-      error: "Title and author are required",
+    if (!title) {
+      return res.status(400).json({
+        error: "Title is required",
+      });
+    }
+
+    const newQuestion = new Question({
+      title,
+      author: username,
+      image,
+      tags: tags || [],
+      likes: 0,
+      views: 0,
+      answers: [],
     });
+
+    await newQuestion.save();
+
+    res.status(201).json(newQuestion);
   }
+);
 
-  const newQuestion = new Question({
-    title,
-    author,
-    image,
-    tags: tags || [],
-  });
+// EDIT question (author only)
+app.put(
+  "/questions/:id",
+  requireUser,
+  async (req: Request, res: Response) => {
+    const username = (req as any).username;
+    const { title, image, tags } = req.body;
 
-  await newQuestion.save();
+    const question = await Question.findById(req.params.id);
 
-  res.status(201).json(newQuestion);
-});
+    if (!question)
+      return res.status(404).json({ error: "Not found" });
 
-// POST answer
-app.post("/questions/:id/answers", async (req: Request, res: Response) => {
-  const { author, content } = req.body;
+    if (question.author !== username) {
+      return res.status(403).json({
+        error: "You can only edit your own question",
+      });
+    }
 
-  if (!author || !content) {
-    return res.status(400).json({ error: "Author and content required" });
+    if (title !== undefined) question.title = title;
+    if (image !== undefined) question.image = image;
+    if (tags !== undefined) question.tags = tags;
+
+    await question.save();
+
+    res.json(question);
   }
+);
 
-  const question = await Question.findById(req.params.id);
+// DELETE question (author only)
+app.delete(
+  "/questions/:id",
+  requireUser,
+  async (req: Request, res: Response) => {
+    const username = (req as any).username;
 
-  if (!question) {
-    return res.status(404).json({ error: "Question not found" });
+    const question = await Question.findById(req.params.id);
+
+    if (!question)
+      return res.status(404).json({ error: "Not found" });
+
+    if (question.author !== username) {
+      return res.status(403).json({
+        error: "You can only delete your own question",
+      });
+    }
+
+    await question.deleteOne();
+
+    res.json({ message: "Question deleted successfully" });
   }
+);
 
-  question.answers.push({ author, content });
+// ADD answer
+app.post(
+  "/questions/:id/answers",
+  requireUser,
+  async (req: Request, res: Response) => {
+    const username = (req as any).username;
+    const { content } = req.body;
 
-  await question.save();
+    const question = await Question.findById(req.params.id);
 
-  res.status(201).json(question);
-});
+    if (!question)
+      return res.status(404).json({ error: "Not found" });
 
-// POST like ❤️ (one like per user)
-app.post("/questions/:id/like", async (req: Request, res: Response) => {
-  const { username } = req.body;
+    question.answers.push({
+      author: username,
+      content,
+    });
 
-  if (!username) {
-    return res.status(400).json({ error: "Username required" });
+    await question.save();
+
+    res.status(201).json(question);
   }
+);
 
-  const question = await Question.findById(req.params.id);
+// LIKE (no double-like)
+app.post(
+  "/questions/:id/like",
+  requireUser,
+  async (req: Request, res: Response) => {
+    const username = (req as any).username;
 
-  if (!question) {
-    return res.status(404).json({ error: "Question not found" });
+    const question = await Question.findById(req.params.id);
+
+    if (!question)
+      return res.status(404).json({ error: "Not found" });
+
+    if (question.likedBy.includes(username)) {
+      return res.status(400).json({
+        error: "You already liked this question",
+      });
+    }
+
+    question.likes += 1;
+    question.likedBy.push(username);
+
+    await question.save();
+
+    res.json({ likes: question.likes });
   }
+);
 
-  if (question.likedBy.includes(username)) {
-    return res.status(400).json({ error: "You already liked this question" });
-  }
-
-  question.likes += 1;
-  question.likedBy.push(username);
-
-  await question.save();
-
-  res.json({ likes: question.likes });
-});
-
-/* ---------------- SERVER START ---------------- */
+/* ---------------- SERVER ---------------- */
 
 const PORT = process.env.PORT || 5000;
 
