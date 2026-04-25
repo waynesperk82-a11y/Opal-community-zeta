@@ -42,14 +42,16 @@ const questionSchema = new mongoose.Schema(
     author: String,
     image: String,
 
+    tags: [String],
+
     likes: { type: Number, default: 0 },
-    likedBy: [String], // stores usernames who liked
+    likedBy: { type: [String], default: [] },
+
+    views: { type: Number, default: 0 },
 
     answers: [answerSchema],
   },
   { timestamps: true }
-);
-  { timestamps: true } // ⏱ createdAt + updatedAt
 );
 
 const Question = mongoose.model("Question", questionSchema);
@@ -77,7 +79,7 @@ app.get("/questions/:id", async (req: Request, res: Response) => {
       return res.status(404).json({ error: "Question not found" });
     }
 
-    question.views += 1; // 👁 increment views
+    question.views += 1;
     await question.save();
 
     res.json(question);
@@ -110,9 +112,6 @@ app.post("/questions", async (req: Request, res: Response) => {
     author,
     image,
     tags: tags || [],
-    likes: 0,
-    views: 0,
-    answers: [],
   });
 
   await newQuestion.save();
@@ -123,6 +122,10 @@ app.post("/questions", async (req: Request, res: Response) => {
 // POST answer
 app.post("/questions/:id/answers", async (req: Request, res: Response) => {
   const { author, content } = req.body;
+
+  if (!author || !content) {
+    return res.status(400).json({ error: "Author and content required" });
+  }
 
   const question = await Question.findById(req.params.id);
 
@@ -137,15 +140,27 @@ app.post("/questions/:id/answers", async (req: Request, res: Response) => {
   res.status(201).json(question);
 });
 
-// POST like ❤️
+// POST like ❤️ (one like per user)
 app.post("/questions/:id/like", async (req: Request, res: Response) => {
+  const { username } = req.body;
+
+  if (!username) {
+    return res.status(400).json({ error: "Username required" });
+  }
+
   const question = await Question.findById(req.params.id);
 
   if (!question) {
     return res.status(404).json({ error: "Question not found" });
   }
 
+  if (question.likedBy.includes(username)) {
+    return res.status(400).json({ error: "You already liked this question" });
+  }
+
   question.likes += 1;
+  question.likedBy.push(username);
+
   await question.save();
 
   res.json({ likes: question.likes });
