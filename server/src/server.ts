@@ -9,13 +9,26 @@ app.use(express.json({ limit: "10mb" }));
 
 /* ---------------- MONGODB CONNECTION ---------------- */
 
-const MONGO_URI = process.env.MONGO_URI || "";
+const MONGO_URI = process.env.MONGO_URI;
+
+if (!MONGO_URI) {
+  console.error("❌ MONGO_URI is NOT defined in environment variables");
+  process.exit(1);
+}
+
+console.log("Using Mongo URI:", MONGO_URI);
 
 mongoose
   .connect(MONGO_URI)
-  .then(() => console.log("MongoDB Connected ✅"))
-  .catch((err) => console.error("MongoDB Error ❌", err));
-
+  .then(() => {
+    console.log("MongoDB Connected ✅");
+  })
+  .catch((err: any) => {
+    console.error("MongoDB Error ❌");
+    console.error("Message:", err.message);
+    console.error("Full error:", err);
+    process.exit(1);
+  });
 /* ---------------- SCHEMAS ---------------- */
 
 const answerSchema = new mongoose.Schema({
