@@ -42,13 +42,13 @@ const questionSchema = new mongoose.Schema(
     author: String,
     image: String,
 
-    // NEW FEATURES
-    tags: [String], // 🏷 categories
-    likes: { type: Number, default: 0 }, // ❤️ like counter
-    views: { type: Number, default: 0 }, // 👁 view counter
+    likes: { type: Number, default: 0 },
+    likedBy: [String], // stores usernames who liked
 
     answers: [answerSchema],
   },
+  { timestamps: true }
+);
   { timestamps: true } // ⏱ createdAt + updatedAt
 );
 
