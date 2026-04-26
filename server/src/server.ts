@@ -1,9 +1,6 @@
-import express, { Request, Response, NextFunction } from "express";
+ import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import mongoose from "mongoose";
-import dotenv from "dotenv";
-
-dotenv.config();
 
 const app = express();
 
@@ -13,7 +10,6 @@ app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 
 /* ================= SIMPLE AUTH ================= */
-// Reads username from request header
 
 const requireUser = (
   req: Request,
@@ -65,12 +61,9 @@ const questionSchema = new mongoose.Schema(
     author: { type: String, required: true },
     image: String,
     tags: [String],
-
     likes: { type: Number, default: 0 },
     likedBy: { type: [String], default: [] },
-
     views: { type: Number, default: 0 },
-
     answers: { type: [answerSchema], default: [] },
   },
   { timestamps: true }
@@ -86,7 +79,6 @@ app.get("/", (_req: Request, res: Response) => {
 
 /* ================= QUESTIONS ================= */
 
-// GET all (newest first)
 app.get("/questions", async (_req: Request, res: Response) => {
   try {
     const questions = await Question.find().sort({ createdAt: -1 });
@@ -96,7 +88,6 @@ app.get("/questions", async (_req: Request, res: Response) => {
   }
 });
 
-// GET single + increase views
 app.get("/questions/:id", async (req: Request, res: Response) => {
   try {
     const question = await Question.findById(req.params.id);
@@ -114,7 +105,6 @@ app.get("/questions/:id", async (req: Request, res: Response) => {
   }
 });
 
-// GET trending
 app.get("/questions/trending", async (_req: Request, res: Response) => {
   try {
     const trending = await Question.find()
@@ -127,162 +117,117 @@ app.get("/questions/trending", async (_req: Request, res: Response) => {
   }
 });
 
-// CREATE question
-app.post(
-  "/questions",
-  requireUser,
-  async (req: Request, res: Response) => {
-    try {
-      const username = (req as any).username;
-      const { title, image, tags } = req.body;
+app.post("/questions", requireUser, async (req: Request, res: Response) => {
+  try {
+    const username = (req as any).username;
+    const { title, image, tags } = req.body;
 
-      if (!title) {
-        return res.status(400).json({
-          error: "Title is required",
-        });
-      }
+    if (!title) {
+      return res.status(400).json({ error: "Title is required" });
+    }
 
-      const newQuestion = new Question({
-        title,
-        author: username,
-        image,
-        tags: tags || [],
+    const newQuestion = new Question({
+      title,
+      author: username,
+      image,
+      tags: tags || [],
+    });
+
+    await newQuestion.save();
+    res.status(201).json(newQuestion);
+  } catch {
+    res.status(500).json({ error: "Failed to create question" });
+  }
+});
+
+app.put("/questions/:id", requireUser, async (req: Request, res: Response) => {
+  try {
+    const username = (req as any).username;
+    const { title, image, tags } = req.body;
+
+    const question = await Question.findById(req.params.id);
+    if (!question) return res.status(404).json({ error: "Not found" });
+
+    if (question.author !== username) {
+      return res.status(403).json({
+        error: "You can only edit your own question",
       });
-
-      await newQuestion.save();
-
-      res.status(201).json(newQuestion);
-    } catch {
-      res.status(500).json({ error: "Failed to create question" });
     }
+
+    if (title !== undefined) question.title = title;
+    if (image !== undefined) question.image = image;
+    if (tags !== undefined) question.tags = tags;
+
+    await question.save();
+    res.json(question);
+  } catch {
+    res.status(400).json({ error: "Update failed" });
   }
-);
+});
 
-// EDIT question (author only)
-app.put(
-  "/questions/:id",
-  requireUser,
-  async (req: Request, res: Response) => {
-    try {
-      const username = (req as any).username;
-      const { title, image, tags } = req.body;
+app.delete("/questions/:id", requireUser, async (req: Request, res: Response) => {
+  try {
+    const username = (req as any).username;
+    const question = await Question.findById(req.params.id);
 
-      const question = await Question.findById(req.params.id);
+    if (!question) return res.status(404).json({ error: "Not found" });
 
-      if (!question)
-        return res.status(404).json({ error: "Not found" });
-
-      if (question.author !== username) {
-        return res.status(403).json({
-          error: "You can only edit your own question",
-        });
-      }
-
-      if (title !== undefined) question.title = title;
-      if (image !== undefined) question.image = image;
-      if (tags !== undefined) question.tags = tags;
-
-      await question.save();
-
-      res.json(question);
-    } catch {
-      res.status(400).json({ error: "Update failed" });
-    }
-  }
-);
-
-// DELETE question (author only)
-app.delete(
-  "/questions/:id",
-  requireUser,
-  async (req: Request, res: Response) => {
-    try {
-      const username = (req as any).username;
-
-      const question = await Question.findById(req.params.id);
-
-      if (!question)
-        return res.status(404).json({ error: "Not found" });
-
-      if (question.author !== username) {
-        return res.status(403).json({
-          error: "You can only delete your own question",
-        });
-      }
-
-      await question.deleteOne();
-
-      res.json({ message: "Question deleted successfully" });
-    } catch {
-      res.status(400).json({ error: "Delete failed" });
-    }
-  }
-);
-
-// ADD answer
-app.post(
-  "/questions/:id/answers",
-  requireUser,
-  async (req: Request, res: Response) => {
-    try {
-      const username = (req as any).username;
-      const { content } = req.body;
-
-      if (!content) {
-        return res.status(400).json({
-          error: "Answer content required",
-        });
-      }
-
-      const question = await Question.findById(req.params.id);
-
-      if (!question)
-        return res.status(404).json({ error: "Not found" });
-
-      question.answers.push({
-        author: username,
-        content,
+    if (question.author !== username) {
+      return res.status(403).json({
+        error: "You can only delete your own question",
       });
-
-      await question.save();
-
-      res.status(201).json(question);
-    } catch {
-      res.status(400).json({ error: "Failed to add answer" });
     }
+
+    await question.deleteOne();
+    res.json({ message: "Question deleted successfully" });
+  } catch {
+    res.status(400).json({ error: "Delete failed" });
   }
-);
+});
 
-// LIKE (no double-like)
-app.post(
-  "/questions/:id/like",
-  requireUser,
-  async (req: Request, res: Response) => {
-    try {
-      const username = (req as any).username;
+app.post("/questions/:id/answers", requireUser, async (req: Request, res: Response) => {
+  try {
+    const username = (req as any).username;
+    const { content } = req.body;
 
-      const question = await Question.findById(req.params.id);
-
-      if (!question)
-        return res.status(404).json({ error: "Not found" });
-
-      if (question.likedBy.includes(username)) {
-        return res.status(400).json({
-          error: "You already liked this question",
-        });
-      }
-
-      question.likes += 1;
-      question.likedBy.push(username);
-
-      await question.save();
-
-      res.json({ likes: question.likes });
-    } catch {
-      res.status(400).json({ error: "Like failed" });
+    if (!content) {
+      return res.status(400).json({ error: "Answer content required" });
     }
+
+    const question = await Question.findById(req.params.id);
+    if (!question) return res.status(404).json({ error: "Not found" });
+
+    question.answers.push({ author: username, content });
+    await question.save();
+
+    res.status(201).json(question);
+  } catch {
+    res.status(400).json({ error: "Failed to add answer" });
   }
-);
+});
+
+app.post("/questions/:id/like", requireUser, async (req: Request, res: Response) => {
+  try {
+    const username = (req as any).username;
+    const question = await Question.findById(req.params.id);
+
+    if (!question) return res.status(404).json({ error: "Not found" });
+
+    if (question.likedBy.includes(username)) {
+      return res.status(400).json({
+        error: "You already liked this question",
+      });
+    }
+
+    question.likes += 1;
+    question.likedBy.push(username);
+
+    await question.save();
+    res.json({ likes: question.likes });
+  } catch {
+    res.status(400).json({ error: "Like failed" });
+  }
+});
 
 /* ================= SERVER ================= */
 
