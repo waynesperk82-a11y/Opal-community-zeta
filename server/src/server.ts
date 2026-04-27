@@ -1,4 +1,4 @@
- import express, { Request, Response, NextFunction } from "express";
+import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import mongoose from "mongoose";
 
@@ -7,7 +7,10 @@ const app = express();
 /* ================= MIDDLEWARE ================= */
 
 app.use(cors());
-app.use(express.json({ limit: "10mb" }));
+
+// 🔥 Increased limit for big uploads (images, files in base64)
+app.use(express.json({ limit: "100mb" }));
+app.use(express.urlencoded({ limit: "100mb", extended: true }));
 
 /* ================= SIMPLE AUTH ================= */
 
@@ -59,7 +62,10 @@ const questionSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
     author: { type: String, required: true },
-    image: String,
+
+    // 🔥 Supports large base64 files
+    image: { type: String },
+
     tags: [String],
     likes: { type: Number, default: 0 },
     likedBy: { type: [String], default: [] },
@@ -129,7 +135,7 @@ app.post("/questions", requireUser, async (req: Request, res: Response) => {
     const newQuestion = new Question({
       title,
       author: username,
-      image,
+      image, // 🔥 Large base64 file saved here
       tags: tags || [],
     });
 
